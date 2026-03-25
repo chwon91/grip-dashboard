@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그립 온사이트전략 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ─────────────────────────── RESET & BASE ─────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #07070f;
+  color: #e2e8f0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─────────────────────────── TOKENS ─────────────────────────── */
+:root {
+  --surface-0: #07070f;
+  --surface-1: #0f0f1c;
+  --surface-2: rgba(255,255,255,0.045);
+  --surface-3: rgba(255,255,255,0.075);
+  --border: rgba(255,255,255,0.07);
+  --border-hi: rgba(255,255,255,0.14);
+  --text-1: #f1f5f9;
+  --text-2: #94a3b8;
+  --text-3: #4b5563;
+  --r: #fb7185;  --r-bg: rgba(251,113,133,.12);
+  --g: #34d399;  --g-bg: rgba(52,211,153,.12);
+  --b: #60a5fa;  --b-bg: rgba(96,165,250,.12);
+  --v: #a78bfa;  --v-bg: rgba(167,139,250,.12);
+  --y: #fbbf24;  --y-bg: rgba(251,191,36,.12);
+  --c: #22d3ee;  --c-bg: rgba(34,211,238,.12);
+  --rad: 12px;
+}
+
+/* ─────────────────────────── BACKGROUND GLOW ─────────────────────────── */
+.bg-glow {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+}
+.bg-glow::before {
+  content: ''; position: absolute;
+  width: 800px; height: 800px; border-radius: 50%;
+  top: -200px; left: -200px;
+  background: radial-gradient(circle, rgba(124,58,237,.07) 0%, transparent 60%);
+}
+.bg-glow::after {
+  content: ''; position: absolute;
+  width: 600px; height: 600px; border-radius: 50%;
+  bottom: -150px; right: -100px;
+  background: radial-gradient(circle, rgba(6,182,212,.05) 0%, transparent 60%);
+}
+
+/* ─────────────────────────── HEADER ─────────────────────────── */
+header {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(7,7,15,.9);
+  backdrop-filter: blur(24px) saturate(160%);
+  border-bottom: 1px solid var(--border);
+}
+.header-inner {
+  max-width: 1440px; margin: 0 auto; padding: 0 28px;
+  height: 58px; display: flex; align-items: center; gap: 24px;
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand-icon {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.brand-name { font-size: 13.5px; font-weight: 700; color: var(--text-1); letter-spacing: -.3px; }
+.brand-sub  { font-size: 10px; color: var(--text-3); }
+.header-nav { display: flex; gap: 2px; margin-left: auto; }
+.nav-btn {
+  font-size: 12.5px; font-weight: 500; color: var(--text-3);
+  padding: 6px 13px; border-radius: 7px; cursor: pointer;
+  border: none; background: none; transition: all .18s;
+}
+.nav-btn:hover { color: var(--text-1); background: var(--surface-2); }
+.nav-btn.active { color: var(--text-1); background: var(--surface-3); }
+.header-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text-3);
+  padding: 4px 10px; border-radius: 20px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.status-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--g); animation: blink 2.2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ─────────────────────────── LAYOUT ─────────────────────────── */
+.container { max-width: 1440px; margin: 0 auto; padding: 0 28px 80px; position: relative; z-index: 1; }
+.page-head { padding: 36px 0 28px; }
+.page-title { font-size: 22px; font-weight: 800; letter-spacing: -.5px; }
+.page-title em { color: #a78bfa; font-style: normal; }
+.page-sub { font-size: 12px; color: var(--text-3); margin-top: 5px; }
+.tab-section { display: none; }
+.tab-section.active { display: block; }
+
+/* ─────────────────────────── GRID ─────────────────────────── */
+.g2  { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.g3  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.g4  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.g2h { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+.g1h { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; }
+.gap { height: 14px; }
+.gap-lg { height: 36px; }
+
+/* ─────────────────────────── CARD ─────────────────────────── */
+.card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--rad);
+  position: relative; overflow: hidden;
+  transition: border-color .2s, background .2s;
+}
+.card:hover { border-color: var(--border-hi); }
+.card-p { padding: 22px 24px; }
+.card-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 20px; gap: 12px;
+}
+.card-title { font-size: 13.5px; font-weight: 700; color: var(--text-1); }
+.card-sub   { font-size: 11px; color: var(--text-3); margin-top: 3px; line-height: 1.4; }
+.source-tag {
+  font-size: 10px; color: var(--text-3); padding: 2px 7px; border-radius: 4px;
+  background: var(--surface-2); border: 1px solid var(--border); flex-shrink: 0;
+}
+
+/* ─────────────────────────── KPI CARD ─────────────────────────── */
+.kpi {
+  padding: 20px 22px;
+}
+.kpi::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 2px 2px 0 0;
+}
+.kpi.v::before { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+.kpi.g::before { background: linear-gradient(90deg, #059669, #34d399); }
+.kpi.b::before { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+.kpi.y::before { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.kpi.r::before { background: linear-gradient(90deg, #dc2626, #fb7185); }
+.kpi.c::before { background: linear-gradient(90deg, #0891b2, #22d3ee); }
+.kpi-label {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .6px;
+  text-transform: uppercase; color: var(--text-3); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 5px;
+}
+.kpi-main { display: flex; align-items: baseline; gap: 4px; margin-bottom: 10px; }
+.kpi-val { font-size: 32px; font-weight: 800; letter-spacing: -1.2px; line-height: 1; }
+.kpi.v .kpi-val { color: var(--v); }
+.kpi.g .kpi-val { color: var(--g); }
+.kpi.b .kpi-val { color: var(--b); }
+.kpi.y .kpi-val { color: var(--y); }
+.kpi.r .kpi-val { color: var(--r); }
+.kpi.c .kpi-val { color: var(--c); }
+.kpi-unit { font-size: 16px; font-weight: 600; opacity: .45; }
+.kpi-foot { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.tag {
+  font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.tag-g { background: var(--g-bg); color: var(--g); }
+.tag-r { background: var(--r-bg); color: var(--r); }
+.tag-y { background: var(--y-bg); color: var(--y); }
+.tag-b { background: var(--b-bg); color: var(--b); }
+.tag-n { background: var(--surface-2); color: var(--text-3); }
+.kpi-foot-label { font-size: 11px; color: var(--text-3); }
+
+/* ─────────────────────────── SECTION LABEL ─────────────────────────── */
+.sec-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--text-3);
+  margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sec-label span { font-weight: 400; letter-spacing: 0; font-size: 10px; }
+
+/* ─────────────────────────── CHIP ─────────────────────────── */
+.chips { display: flex; gap: 4px; }
+.chip {
+  font-size: 10.5px; font-weight: 500; padding: 3px 9px;
+  border-radius: 20px; border: 1px solid var(--border);
+  cursor: pointer; color: var(--text-3); background: none;
+  transition: all .15s;
+}
+.chip:hover, .chip.on { color: var(--v); border-color: rgba(167,139,250,.4); background: var(--v-bg); }
+
+/* ─────────────────────────── CHART ─────────────────────────── */
+.chart-wrap { position: relative; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.leg-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--text-2); cursor: pointer;
+  transition: opacity .15s;
+}
+.leg-item.off { opacity: .35; }
+.leg-line { width: 18px; height: 2px; border-radius: 1px; }
+.leg-dot  { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ─────────────────────────── TABLE ─────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-size: 10px; font-weight: 600; letter-spacing: .5px;
+  text-transform: uppercase; color: var(--text-3);
+  padding: 0 12px 10px 0; text-align: left;
+}
+.data-table td {
+  font-size: 12.5px; color: var(--text-2); padding: 9px 12px 9px 0;
+  border-top: 1px solid var(--border); vertical-align: middle;
+}
+.data-table tr:hover td { color: var(--text-1); background: rgba(255,255,255,.015); }
+.data-table td.num { font-weight: 700; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.bar-inline { height: 3px; border-radius: 2px; background: var(--border); margin-top: 5px; overflow: hidden; }
+.bar-fill   { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #7c3aed, #a78bfa); transition: width .5s; }
+
+/* ─────────────────────────── INSIGHT BOX ─────────────────────────── */
+.insight {
+  padding: 14px 16px;
+  background: rgba(124,58,237,.06); border: 1px solid rgba(124,58,237,.15);
+  border-radius: 8px; font-size: 12px; line-height: 1.6; color: var(--text-2);
+  margin-top: 14px;
+}
+.insight strong { color: var(--v); }
+
+/* ─────────────────────────── WEEK BADGE ─────────────────────────── */
+.w-badge {
+  font-size: 9.5px; font-weight: 700; padding: 2px 6px;
+  border-radius: 3px; text-transform: uppercase; letter-spacing: .4px;
+  background: var(--surface-3); color: var(--text-3); border: 1px solid var(--border);
+  display: inline-block; margin-bottom: 6px;
+}
+
+/* ─────────────────────────── KPI COMPARE TABLE ─────────────────────────── */
+.kpi-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-top: 1px solid var(--border);
+  gap: 8px;
+}
+.kpi-row:first-child { border-top: none; }
+.kpi-row-label { font-size: 12px; color: var(--text-2); flex: 1; }
+.kpi-row-target { font-size: 11px; color: var(--text-3); width: 60px; text-align: right; }
+.kpi-row-actual { font-size: 13px; font-weight: 700; color: var(--text-1); width: 60px; text-align: right; }
+.kpi-row-diff   { font-size: 11px; width: 55px; text-align: right; }
+.kpi-row-diff.pos { color: var(--g); }
+.kpi-row-diff.neg { color: var(--r); }
+
+/* ─────────────────────────── PROGRESS BAR ─────────────────────────── */
+.prog-wrap { margin-top: 6px; }
+.prog-bar  { height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; margin-top: 4px; }
+.prog-fill { height: 100%; border-radius: 2px; transition: width .6s; }
+.prog-label { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-3); }
+
+/* ─────────────────────────── TOOLTIP OVERRIDE ─────────────────────────── */
+/* chart.js uses canvas */
+
+/* ─────────────────────────── RESPONSIVE ─────────────────────────── */
+@media (max-width: 1100px) {
+  .g4 { grid-template-columns: 1fr 1fr; }
+  .g2h, .g1h { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .g2, .g3 { grid-template-columns: 1fr; }
+  .g4 { grid-template-columns: 1fr 1fr; }
+  .container { padding: 0 16px 60px; }
+  header { padding: 0 16px; }
+}
+
+/* ─────────────────────────── FILTER BAR ─────────────────────────── */
+.filter-bar {
+  position: sticky; top: 58px; z-index: 190;
+  background: rgba(7,7,15,.93);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.filter-inner {
+  max-width: 1440px; margin: 0 auto; padding: 0 28px;
+  height: 40px; display: flex; align-items: center; gap: 5px;
+}
+.filter-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase;
+  color: var(--text-3); margin-right: 6px; white-space: nowrap;
+}
+.filter-btn {
+  font-size: 11px; font-weight: 500; padding: 3px 10px;
+  border-radius: 20px; border: 1px solid var(--border);
+  cursor: pointer; color: var(--text-3); background: none;
+  transition: all .14s;
+}
+.filter-btn:hover { color: var(--text-1); border-color: var(--border-hi); }
+.filter-btn.on { color: var(--v); border-color: rgba(167,139,250,.45); background: var(--v-bg); font-weight: 600; }
+.filter-divider { width: 1px; height: 16px; background: var(--border); margin: 0 4px; }
+.filter-info { font-size: 10.5px; color: var(--text-3); margin-left: auto; white-space: nowrap; }
+
+/* ─────────────────────────── LB SLOT SELECTOR ─────────────────────────── */
+.lb-slot-bar {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  padding: 10px 16px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--rad);
+}
+.lb-slot-select {
+  background: rgba(255,255,255,.05); border: 1px solid var(--border-hi);
+  color: var(--text-1); border-radius: 8px; padding: 6px 28px 6px 12px;
+  font-size: 12px; font-family: inherit; cursor: pointer; outline: none;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748b' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  transition: border-color .15s;
+}
+.lb-slot-select:focus { border-color: rgba(167,139,250,.5); }
+.lb-slot-select option { background: #16162a; color: #e2e8f0; }
+.lb-slot-desc { font-size: 11px; color: var(--text-2); }
+
+/* ─────────────────────────── INSIGHT FEED ─────────────────────────── */
+.feed-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--rad); margin-bottom: 14px; overflow: hidden; }
+.feed-card-head { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.feed-date-badge { font-size: 11px; font-weight: 700; color: var(--v); background: var(--v-bg); padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.feed-type-weekly { font-size: 10px; font-weight: 600; color: var(--g); background: var(--g-bg); padding: 2px 8px; border-radius: 10px; }
+.feed-type-daily  { font-size: 10px; font-weight: 600; color: var(--b); background: var(--b-bg); padding: 2px 8px; border-radius: 10px; }
+.feed-ts { margin-left: auto; font-size: 10.5px; color: var(--text-3); white-space: nowrap; }
+.feed-card-body { padding: 4px 0; }
+.feed-section { padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.feed-section:last-child { border-bottom: none; }
+.feed-section-title { font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+.feed-text { font-size: 12.5px; color: var(--text-2); line-height: 1.75; }
+.feed-text strong { color: var(--text-1); font-weight: 600; }
+.feed-text em { color: var(--y); font-style: normal; }
+.feed-empty { text-align: center; padding: 80px 20px; color: var(--text-3); font-size: 13px; line-height: 2; }
+.feed-update-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 9px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--rad); font-size: 11.5px; color: var(--text-2); }
+.lb-no-data-msg {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; color: var(--text-2); font-size: 13px; gap: 6px;
+}
+
+/* ─────────────────────────── WEEKLY REPORT ─────────────────────────── */
+.feed-view-toggle { display: flex; gap: 6px; margin-bottom: 20px; }
+.feed-view-btn { font-size: 12px; font-weight: 600; padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-3); cursor: pointer; transition: all .15s; }
+.feed-view-btn:hover { color: var(--text-1); }
+.feed-view-btn.active { background: var(--v-bg); border-color: rgba(167,139,250,.4); color: var(--v); }
+.weekly-hero { background: linear-gradient(135deg,rgba(124,58,237,.12),rgba(99,102,241,.07)); border: 1px solid rgba(124,58,237,.25); border-radius: var(--rad); padding: 22px 26px; margin-bottom: 16px; }
+.weekly-hero-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; color: var(--v); text-transform: uppercase; margin-bottom: 7px; }
+.weekly-hero-title { font-size: 22px; font-weight: 800; color: var(--text-1); letter-spacing: -.5px; margin-bottom: 4px; }
+.weekly-hero-range { font-size: 12px; color: var(--text-3); }
+.weekly-stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+@media(max-width:700px){ .weekly-stats-row { grid-template-columns: repeat(2,1fr); } }
+.weekly-stat { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.weekly-stat-label { font-size: 10px; color: var(--text-3); margin-bottom: 6px; font-weight: 600; letter-spacing: .3px; }
+.weekly-stat-value { font-size: 26px; font-weight: 800; line-height: 1; }
+.weekly-stat-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+.weekly-section { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--rad); margin-bottom: 14px; overflow: hidden; }
+.weekly-section-head { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.weekly-section-title { font-size: 12px; font-weight: 700; color: var(--text-1); }
+.weekly-section-count { font-size: 10px; font-weight: 700; color: var(--text-3); background: var(--surface-3); padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+.highlight-item { display: flex; align-items: flex-start; gap: 14px; padding: 13px 18px; border-bottom: 1px solid var(--border); }
+.highlight-item:last-child { border-bottom: none; }
+.hi-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+.hi-content { flex: 1; min-width: 0; }
+.hi-title { font-size: 13px; font-weight: 600; color: var(--text-1); margin-bottom: 4px; }
+.hi-desc { font-size: 12px; color: var(--text-2); line-height: 1.7; }
+.hi-meta { display: flex; align-items: center; gap: 7px; margin-top: 6px; flex-wrap: wrap; }
+.hi-date { font-size: 10.5px; color: var(--text-3); }
+.hi-tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px; }
+.tag-done  { color: var(--g); background: var(--g-bg); }
+.tag-issue { color: var(--r); background: var(--r-bg); }
+.tag-test  { color: var(--b); background: var(--b-bg); }
+.tag-info  { color: var(--y); background: var(--y-bg); }
+.timeline-day { display: flex; align-items: flex-start; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.timeline-day:last-child { border-bottom: none; }
+.tl-date-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 54px; }
+.tl-date { font-size: 11px; font-weight: 700; color: var(--v); background: var(--v-bg); padding: 3px 8px; border-radius: 8px; white-space: nowrap; }
+.tl-day-name { font-size: 9.5px; color: var(--text-3); margin-top: 3px; }
+.tl-body { flex: 1; padding-top: 2px; }
+.tl-item { font-size: 12.5px; color: var(--text-2); line-height: 1.65; padding-left: 13px; position: relative; margin-bottom: 3px; }
+.tl-item:last-child { margin-bottom: 0; }
+.tl-item::before { content: '·'; position: absolute; left: 0; color: var(--text-3); font-size: 16px; line-height: 1.2; }
+.tl-item strong { color: var(--text-1); font-weight: 600; }
+.tl-empty { font-size: 12px; color: var(--text-3); font-style: italic; padding-left: 13px; }
+
+/* ─────────────────────────── AI SECTION ─────────────────────────── */
+.ai-settings-bar {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--rad); padding: 13px 18px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.ai-settings-bar label { font-size: 11px; font-weight: 600; color: var(--text-3); white-space: nowrap; }
+.ai-settings-bar select {
+  background: rgba(255,255,255,.04); border: 1px solid var(--border);
+  border-radius: 7px; padding: 6px 10px; color: var(--text-1);
+  font-size: 12px; font-family: inherit; outline: none;
+  transition: border-color .15s; cursor: pointer;
+}
+.ai-settings-bar select:focus { border-color: rgba(167,139,250,.4); }
+.ai-key-input {
+  flex: 1; min-width: 220px; background: rgba(255,255,255,.04);
+  border: 1px solid var(--border); border-radius: 7px;
+  padding: 6px 12px; color: var(--text-1); font-size: 12px;
+  font-family: inherit; outline: none; transition: border-color .15s;
+}
+.ai-key-input:focus { border-color: rgba(167,139,250,.4); }
+.ai-key-input::placeholder { color: var(--text-3); }
+.ai-save-btn {
+  font-size: 11.5px; font-weight: 600; padding: 6px 14px; border-radius: 7px;
+  cursor: pointer; border: 1px solid rgba(167,139,250,.3);
+  background: var(--v-bg); color: var(--v); transition: all .15s;
+}
+.ai-save-btn:hover { background: rgba(167,139,250,.22); }
+.ai-key-status { font-size: 11px; color: var(--g); }
+
+.ai-quick-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.ai-quick-btn {
+  font-size: 11.5px; font-weight: 500; padding: 6px 13px;
+  border-radius: 20px; border: 1px solid var(--border);
+  cursor: pointer; color: var(--text-2); background: var(--surface-2);
+  transition: all .14s;
+}
+.ai-quick-btn:hover { color: var(--v); border-color: rgba(167,139,250,.4); background: var(--v-bg); }
+
+.ai-chat-area {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--rad); padding: 18px 20px; min-height: 380px;
+  max-height: 540px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
+  margin-bottom: 11px; scroll-behavior: smooth;
+}
+.ai-chat-empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; color: var(--text-3); text-align: center;
+  gap: 10px; font-size: 12.5px; padding: 40px 20px; opacity: .6;
+}
+.ai-chat-empty .ai-big-icon { font-size: 40px; opacity: .5; }
+.ai-msg { max-width: 88%; display: flex; flex-direction: column; gap: 4px; }
+.ai-msg.user { align-self: flex-end; align-items: flex-end; }
+.ai-msg.ai   { align-self: flex-start; align-items: flex-start; }
+.ai-bubble {
+  padding: 10px 15px; border-radius: 11px;
+  font-size: 12.5px; line-height: 1.68; white-space: pre-wrap;
+}
+.ai-msg.user .ai-bubble {
+  background: rgba(167,139,250,.18); border: 1px solid rgba(167,139,250,.28);
+  color: var(--text-1); border-bottom-right-radius: 3px;
+}
+.ai-msg.ai .ai-bubble {
+  background: rgba(255,255,255,.04); border: 1px solid var(--border);
+  color: var(--text-2); border-bottom-left-radius: 3px;
+}
+.ai-msg-meta { font-size: 10px; color: var(--text-3); }
+.ai-loading-wrap { align-self: flex-start; padding: 4px 0; }
+.ai-loading-dots { display: flex; gap: 4px; align-items: center; padding: 8px 4px; }
+.ai-loading-dots span {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--v); animation: dotBlink 1.3s infinite;
+}
+.ai-loading-dots span:nth-child(2) { animation-delay: .22s; }
+.ai-loading-dots span:nth-child(3) { animation-delay: .44s; }
+@keyframes dotBlink { 0%,80%,100%{opacity:.15} 40%{opacity:.9} }
+
+.ai-input-row { display: flex; gap: 9px; align-items: flex-end; }
+.ai-textarea {
+  flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px; color: var(--text-1);
+  font-size: 12.5px; font-family: inherit; resize: none; outline: none;
+  min-height: 46px; max-height: 130px; transition: border-color .15s; line-height: 1.5;
+}
+.ai-textarea:focus { border-color: rgba(167,139,250,.4); }
+.ai-textarea::placeholder { color: var(--text-3); }
+.ai-send-btn {
+  padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: white; font-size: 12.5px; font-weight: 600;
+  transition: opacity .15s, transform .1s; white-space: nowrap; flex-shrink: 0;
+  height: 46px;
+}
+.ai-send-btn:hover:not(:disabled) { opacity: .86; transform: translateY(-1px); }
+.ai-send-btn:disabled { opacity: .38; cursor: not-allowed; }
+.ai-error { font-size: 11.5px; color: var(--r); background: var(--r-bg); border: 1px solid rgba(251,113,133,.25); padding: 8px 13px; border-radius: 7px; }
+
+/* ─────────────────────────── SCROLLBAR ─────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.15); }
+
+/* ─────────────────────────── FADE ANIM ─────────────────────────── */
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.fade { animation: fadeUp .4s ease both; }
+.fade:nth-child(1){animation-delay:.04s}
+.fade:nth-child(2){animation-delay:.08s}
+.fade:nth-child(3){animation-delay:.12s}
+.fade:nth-child(4){animation-delay:.16s}
+.fade:nth-child(5){animation-delay:.20s}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<!-- ═══ HEADER ═══ -->
+<header>
+  <div class="header-inner">
+    <a class="brand" href="#">
+      <div class="brand-icon">📊</div>
+      <div>
+        <div class="brand-name">그립 온사이트전략</div>
+        <div class="brand-sub">Live Commerce · On-Site Operations Dashboard</div>
+      </div>
+    </a>
+    <nav class="header-nav">
+      <button class="nav-btn active" data-tab="overview">종합 현황</button>
+      <button class="nav-btn" data-tab="banner">배너 상세</button>
+      <button class="nav-btn" data-tab="live">라이브배너</button>
+      <button class="nav-btn" data-tab="funnel">퍼널 / KPI</button>
+      <button class="nav-btn" data-tab="ai">🤖 AI 분석</button>
+      <button class="nav-btn" data-tab="feed">📝 인사이트 피드</button>
+    </nav>
+    <div class="header-status">
+      <span class="status-dot"></span>
+      데이터 기준: 25.10월 ~ 26.03월 (24주) · 26.03.23 기준
+    </div>
+  </div>
+</header>
+
+<!-- ═══ FILTER BAR ═══ -->
+<div class="filter-bar">
+  <div class="filter-inner">
+    <span class="filter-label">기간</span>
+    <button class="filter-btn on" onclick="setMonthFilter('all',this)">전체</button>
+    <div class="filter-divider"></div>
+    <button class="filter-btn" onclick="setMonthFilter('25',this)">25년</button>
+    <button class="filter-btn" onclick="setMonthFilter('26',this)">26년</button>
+    <div class="filter-divider"></div>
+    <button class="filter-btn" onclick="setMonthFilter('10',this)">10월</button>
+    <button class="filter-btn" onclick="setMonthFilter('11',this)">11월</button>
+    <button class="filter-btn" onclick="setMonthFilter('12',this)">12월</button>
+    <div class="filter-divider"></div>
+    <button class="filter-btn" onclick="setMonthFilter('1',this)">1월</button>
+    <button class="filter-btn" onclick="setMonthFilter('2',this)">2월</button>
+    <button class="filter-btn" onclick="setMonthFilter('3',this)">3월</button>
+    <span class="filter-info" id="filter-info">24주 전체 · 25.10 ~ 26.03</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ════════════════════════════════════════════════
+     TAB 1: 종합 현황
+════════════════════════════════════════════════ -->
+<div class="tab-section active" id="tab-overview">
+  <div class="page-head">
+    <h1 class="page-title">온사이트 운영 <em>종합 현황</em></h1>
+    <p class="page-sub">배너 CTR · 라이브배너 · 퍼널 지표 주단위 통합 뷰 &nbsp;|&nbsp; 소스: 1-0.주간지표 · 라이브배너 RAW</p>
+  </div>
+
+  <!-- KPI 4개 (동적) -->
+  <div class="sec-label">핵심 지표 <span id="kpi-period-label"></span></div>
+  <div class="g4">
+    <div class="card kpi v fade">
+      <div class="kpi-label">🔝 톱배너 (1번구좌)</div>
+      <div class="kpi-main"><span class="kpi-val" id="kv-top">–</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot" id="kf-top"></div>
+    </div>
+    <div class="card kpi g fade">
+      <div class="kpi-label">📺 라이브배너 (2번구좌)</div>
+      <div class="kpi-main"><span class="kpi-val" id="kv-live">–</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot" id="kf-live"></div>
+    </div>
+    <div class="card kpi b fade">
+      <div class="kpi-label">👁 시청전환율</div>
+      <div class="kpi-main"><span class="kpi-val" id="kv-view">–</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot" id="kf-view"></div>
+    </div>
+    <div class="card kpi y fade">
+      <div class="kpi-label">🛒 구매전환율</div>
+      <div class="kpi-main"><span class="kpi-val" id="kv-buy">–</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot" id="kf-buy"></div>
+    </div>
+  </div>
+
+  <div class="gap-lg"></div>
+
+  <!-- 배너 CTR 주간 트렌드 (메인 차트) -->
+  <div class="sec-label">배너 CTR 주간 추이 <span>소스: 1-0.주간지표</span></div>
+  <div class="card card-p fade">
+    <div class="card-head">
+      <div>
+        <div class="card-title">배너 영역별 주간 CTR 트렌드</div>
+        <div class="card-sub">톱배너(1번구좌) · 라이브배너(집계) · 프로모션탭 &nbsp;|&nbsp; 10/6주 ~ 12/29주</div>
+      </div>
+      <div class="chips">
+        <button class="chip on" onclick="filterBannerTrend(this,'all')">전체</button>
+        <button class="chip" onclick="filterBannerTrend(this,'top')">톱배너</button>
+        <button class="chip" onclick="filterBannerTrend(this,'live')">라이브배너</button>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:280px">
+      <canvas id="c-bannerTrend"></canvas>
+    </div>
+    <div class="chart-legend" id="leg-bannerTrend"></div>
+    <div class="insight">
+      <strong>12/15주 톱배너 7.73%</strong> — 슈퍼위크 기간 이벤트 배너 효과로 급등. 이 주 목표(2.04%) 대비 <strong>378% 달성</strong>.
+      반면 12/29주는 연말 비수기로 2.15%로 하락. 라이브배너는 1/26주 <strong>9.24%</strong>로 최고치 — 1월 말 주요 이벤트 기간.
+    </div>
+  </div>
+
+  <div class="gap"></div>
+
+  <div class="g2">
+    <!-- 라이브배너 RAW 주간 -->
+    <div class="card card-p fade">
+      <div class="card-head">
+        <div>
+          <div class="card-title">라이브배너 RAW 방송별 CTR</div>
+          <div class="card-sub">방송별 평균 CTR · 10월~3월 &nbsp;|&nbsp; 소스: 라이브배너 RAW</div>
+        </div>
+        <div class="source-tag">RAW 집계</div>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="c-liveRaw"></canvas>
+      </div>
+    </div>
+
+    <!-- 배너 영역별 CTR (월별 평균) -->
+    <div class="card card-p fade">
+      <div class="card-head">
+        <div>
+          <div class="card-title">월별 배너 영역 CTR 비교</div>
+          <div class="card-sub" id="area-compare-sub">톱배너 · 라이브배너 · 홈ATF 배너 월별 평균 &nbsp;|&nbsp; 필터 연동</div>
+        </div>
+        <select class="lb-slot-select" id="area-mode-select" onchange="setAreaMode(this.value)" style="font-size:11px;padding:4px 22px 4px 9px">
+          <option value="avg">월 평균</option>
+          <option value="median">월 중간값</option>
+          <option value="max">월 최고</option>
+          <option value="min">월 최저</option>
+        </select>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="c-areaCompare"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END TAB 1 -->
+
+
+<!-- ════════════════════════════════════════════════
+     TAB 2: 배너 상세
+════════════════════════════════════════════════ -->
+<div class="tab-section" id="tab-banner">
+  <div class="page-head">
+    <h1 class="page-title">배너 <em>상세 분석</em></h1>
+    <p class="page-sub">톱배너 · 프로모션탭 · 상단와이드배너 주간 성과 상세 &nbsp;|&nbsp; 소스: 1-0.주간지표 · 최상단배너 지표</p>
+  </div>
+
+  <!-- 월별 누계 -->
+  <div class="sec-label">월별 누계 배너 CTR <span>소스: 1-0.주간지표 월 누계</span></div>
+  <div class="g4">
+    <div class="card kpi v fade">
+      <div class="kpi-label">톱배너 11월 누계</div>
+      <div class="kpi-main"><span class="kpi-val">3.82</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot"><span class="tag tag-g">목표 2.04% 대비 +187%</span></div>
+    </div>
+    <div class="card kpi g fade">
+      <div class="kpi-label">톱배너 12월 누계</div>
+      <div class="kpi-main"><span class="kpi-val">4.28</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot"><span class="tag tag-g">목표 2.04% 대비 +210%</span></div>
+    </div>
+    <div class="card kpi b fade">
+      <div class="kpi-label">라이브배너 11월 누계</div>
+      <div class="kpi-main"><span class="kpi-val">3.66</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot"><span class="tag tag-g">목표 2.04% 대비 +179%</span></div>
+    </div>
+    <div class="card kpi c fade">
+      <div class="kpi-label">라이브배너 12월 누계</div>
+      <div class="kpi-main"><span class="kpi-val">3.91</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot"><span class="tag tag-g">목표 2.04% 대비 +191%</span></div>
+    </div>
+  </div>
+
+  <div class="gap-lg"></div>
+  <div class="sec-label">주간 배너 CTR 상세 <span>Target vs Actual</span></div>
+
+  <div class="g2h">
+    <!-- 톱배너 주간 상세 차트 -->
+    <div class="card card-p fade">
+      <div class="card-head">
+        <div>
+          <div class="card-title">톱배너(1번구좌) 주간 CTR – 목표 vs 실적</div>
+          <div class="card-sub">주간 Actual · 목표 라인 2.04% &nbsp;|&nbsp; 10/6주 ~ 12/29주</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:260px">
+        <canvas id="c-topBannerDetail"></canvas>
+      </div>
+    </div>
+
+    <!-- 주간 성과 테이블 -->
+    <div class="card card-p fade">
+      <div class="card-title" style="margin-bottom:16px">주차별 배너 성과 요약</div>
+      <table class="data-table" id="tbl-weekly"></table>
+    </div>
+  </div>
+
+  <div class="gap"></div>
+
+  <!-- 상단 와이드배너 -->
+  <div class="sec-label">상단 와이드배너 이벤트별 성과 <span>소스: 최상단배너 지표</span></div>
+  <div class="g2">
+    <div class="card card-p fade">
+      <div class="card-head">
+        <div>
+          <div class="card-title">상단 와이드배너 CTR (이벤트별)</div>
+          <div class="card-sub">12월~2월 상단 와이드배너 &nbsp;|&nbsp; 시간대 운영 기반 단기 고CTR</div>
+        </div>
+        <div class="source-tag">최상단배너</div>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="c-wideBanner"></canvas>
+      </div>
+    </div>
+
+    <!-- 톱배너 주간 히트맵 느낌 -->
+    <div class="card card-p fade">
+      <div class="card-title" style="margin-bottom:4px">배너 주간 성과 분포</div>
+      <div class="card-sub" style="margin-bottom:18px">주간 CTR 레벨 (낮음→높음)</div>
+      <div id="bannerHeatmap"></div>
+      <div class="insight" style="margin-top:16px">
+        <strong>와이드배너 25%+</strong> — 12월 슈퍼위크 기간 상단 와이드배너는 25.33%의 압도적 CTR.
+        톱배너 1번구좌는 <strong>동기간 7.73%</strong>로 역대 최고. 두 배너의 동시 운영 효과.
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END TAB 2 -->
+
+
+<!-- ════════════════════════════════════════════════
+     TAB 3: 라이브배너
+════════════════════════════════════════════════ -->
+<div class="tab-section" id="tab-live">
+  <div class="page-head">
+    <h1 class="page-title">라이브배너 <em>RAW 분석</em></h1>
+    <p class="page-sub">방송별 CTR · 방송 수 · 월별 성과 &nbsp;|&nbsp; 소스: 라이브배너 RAW (11/1 ~ 3/12)</p>
+  </div>
+
+  <!-- 구좌 선택 -->
+  <div class="lb-slot-bar">
+    <span class="filter-label">구좌 선택</span>
+    <select class="lb-slot-select" id="lb-slot-select" onchange="setLBSlot(this.value)">
+      <option value="all">전체 집계</option>
+      <option value="2">2번 구좌 (메인)</option>
+      <option value="3">3번 구좌</option>
+      <option value="4">4번 구좌</option>
+      <option value="5">5번 구좌</option>
+      <option value="6">6번 구좌</option>
+      <option value="7">7번 구좌</option>
+      <option value="9">9번 구좌</option>
+    </select>
+    <span class="lb-slot-desc" id="lb-slot-desc">전체 집계 기준</span>
+  </div>
+
+  <!-- 월별 요약 -->
+  <div class="sec-label">월별 라이브배너 CTR 요약</div>
+  <div class="g4" style="margin-bottom:28px">
+    <div class="card kpi g fade">
+      <div class="kpi-label">11월 방송별 평균 CTR</div>
+      <div class="kpi-main"><span class="kpi-val">4.92</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot"><span class="tag tag-n">방송 1,185건</span></div>
+    </div>
+    <div class="card kpi b fade">
+      <div class="kpi-label">12월 방송별 평균 CTR</div>
+      <div class="kpi-main"><span class="kpi-val">5.08</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot"><span class="tag tag-g">▲ MoM +0.16%p</span></div>
+    </div>
+    <div class="card kpi y fade">
+      <div class="kpi-label">1월 방송별 평균 CTR</div>
+      <div class="kpi-main"><span class="kpi-val">6.11</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot"><span class="tag tag-g">▲ MoM +1.03%p</span></div>
+    </div>
+    <div class="card kpi r fade">
+      <div class="kpi-label">2~3월 방송별 평균 CTR</div>
+      <div class="kpi-main"><span class="kpi-val">2.63</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot"><span class="tag tag-r">▼ MoM 급락</span></div>
+    </div>
+  </div>
+
+  <div class="sec-label">방송별 CTR + 방송 수 주간 추이 <span>소스: 라이브배너 RAW 집계</span></div>
+  <div class="card card-p fade">
+    <div class="card-head">
+      <div>
+        <div class="card-title">라이브배너 주간 평균 CTR & 방송 수</div>
+        <div class="card-sub">왼쪽 축: 방송별 평균 CTR (%) &nbsp;|&nbsp; 오른쪽 축: 주간 방송 건수</div>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:300px">
+      <canvas id="c-liveDual"></canvas>
+    </div>
+    <div class="insight" id="lb-insight">
+      <strong>2월 CTR 급락 주목</strong> — 1월 말(1/26주) 9.24%에서 2/9주 1.92%로 급락. 방송 수(296→224건)보다 CTR 낙폭이 크므로,
+      배너 내 콘텐츠 구성 변화나 이벤트 종료 효과로 분석됨. <strong>3월은 2.3% 수준 유지</strong> 중.
+    </div>
+  </div>
+
+  <div class="gap"></div>
+
+  <div class="g2">
+    <!-- 월별 분포 차트 -->
+    <div class="card card-p fade">
+      <div class="card-head">
+        <div>
+          <div class="card-title">월별 라이브배너 CTR 분포</div>
+          <div class="card-sub">월 평균 방송별 CTR · 11월~3월</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="c-liveMonth"></canvas>
+      </div>
+    </div>
+
+    <!-- 방송 유형별 -->
+    <div class="card card-p fade">
+      <div class="card-head">
+        <div>
+          <div class="card-title">주간 방송 수 추이</div>
+          <div class="card-sub">운영/일반 전체 라이브배너 방송 건수</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="c-liveCount"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END TAB 3 -->
+
+
+<!-- ════════════════════════════════════════════════
+     TAB 4: 퍼널 / KPI
+════════════════════════════════════════════════ -->
+<div class="tab-section" id="tab-funnel">
+  <div class="page-head">
+    <h1 class="page-title">퍼널 지표 &amp; <em>KPI 달성 현황</em></h1>
+    <p class="page-sub">시청전환 · 구매전환 · 프로모션 기여도 · KPI 목표 대비 실적 &nbsp;|&nbsp; 소스: 1-0.주간지표 · 26년_KPI</p>
+  </div>
+
+  <!-- 퍼널 KPI 카드 -->
+  <div class="sec-label">퍼널 지표 현황 <span>12/29주 기준</span></div>
+  <div class="g4" style="margin-bottom:28px">
+    <div class="card kpi b fade">
+      <div class="kpi-label">시청전환 (최근주)</div>
+      <div class="kpi-main"><span class="kpi-val">37.06</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot">
+        <span class="tag tag-r">목표 40.99% 미달</span>
+        <span class="kpi-foot-label">-3.93%p</span>
+      </div>
+    </div>
+    <div class="card kpi y fade">
+      <div class="kpi-label">구매전환 (최근주)</div>
+      <div class="kpi-main"><span class="kpi-val">6.36</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot">
+        <span class="tag tag-r">목표 8.45% 미달</span>
+        <span class="kpi-foot-label">-2.09%p</span>
+      </div>
+    </div>
+    <div class="card kpi v fade">
+      <div class="kpi-label">11월 프로모션 기여도</div>
+      <div class="kpi-main"><span class="kpi-val">32.34</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot">
+        <span class="tag tag-n">목표 34.88%</span>
+      </div>
+    </div>
+    <div class="card kpi g fade">
+      <div class="kpi-label">12월 프로모션 기여도</div>
+      <div class="kpi-main"><span class="kpi-val">39.77</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-foot">
+        <span class="tag tag-g">목표 34.88% 초과</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 퍼널 트렌드 차트 -->
+  <div class="sec-label">퍼널 지표 주간 트렌드 <span>소스: 1-0.주간지표</span></div>
+  <div class="card card-p fade">
+    <div class="card-head">
+      <div>
+        <div class="card-title">시청전환 · 구매전환 주간 추이</div>
+        <div class="card-sub">목표 라인 포함 &nbsp;|&nbsp; 10/6주 ~ 12/29주</div>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:280px">
+      <canvas id="c-funnelTrend"></canvas>
+    </div>
+    <div class="chart-legend" id="leg-funnel"></div>
+  </div>
+
+  <div class="gap"></div>
+
+  <div class="g2">
+    <!-- 프로모션 기여도 -->
+    <div class="card card-p fade">
+      <div class="card-head">
+        <div>
+          <div class="card-title">프로모션 기여도 주간 추이</div>
+          <div class="card-sub">목표 34.88%</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="c-promoContrib"></canvas>
+      </div>
+    </div>
+
+    <!-- KPI 달성률 -->
+    <div class="card card-p fade">
+      <div class="card-title" style="margin-bottom:16px">KPI 달성 현황 (26년 1분기)</div>
+      <div id="kpiAchievements"></div>
+    </div>
+  </div>
+
+  <div class="gap"></div>
+
+  <!-- KPI 목표 vs 실적 테이블 -->
+  <div class="sec-label">월별 KPI 목표 vs 실적 <span>소스: 26년_KPI + 1-0.주간지표</span></div>
+  <div class="card card-p fade">
+    <div style="overflow-x:auto">
+    <table class="data-table" style="min-width:900px">
+      <thead>
+        <tr>
+          <th>지표</th>
+          <th>11월 목표</th><th>11월 실적</th>
+          <th>12월 목표</th><th>12월 실적</th>
+          <th>1월 목표</th><th>1월 실적</th>
+          <th>2월 목표</th><th>2월 실적</th>
+          <th>3월 목표</th><th>3월 실적 <small style="font-weight:400;color:var(--text-2)">(3주)</small></th>
+          <th>트렌드</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>홈ATF 배너 CTR</td>
+          <td>2.04%</td><td class="num">2.07%</td>
+          <td>2.04%</td><td class="num">2.58%</td>
+          <td>2.54%</td><td class="num" style="color:var(--g)">4.46%</td>
+          <td>2.60%</td><td class="num" style="color:var(--g)">3.98%</td>
+          <td>2.60%</td><td class="num" style="color:var(--g)">5.68%</td>
+          <td><span class="tag tag-g">상승 추세</span></td>
+        </tr>
+        <tr>
+          <td>톱배너(1번) CTR</td>
+          <td>2.04%</td><td class="num" style="color:var(--g)">3.82%</td>
+          <td>2.04%</td><td class="num" style="color:var(--g)">4.28%</td>
+          <td>2.54%</td><td class="num">2.23%</td>
+          <td>2.60%</td><td class="num">2.02%</td>
+          <td>2.60%</td><td class="num">2.58%</td>
+          <td><span class="tag tag-y">변동</span></td>
+        </tr>
+        <tr>
+          <td>라이브배너 CTR</td>
+          <td>2.04%</td><td class="num" style="color:var(--g)">3.66%</td>
+          <td>2.04%</td><td class="num" style="color:var(--g)">3.91%</td>
+          <td>2.54%</td><td class="num" style="color:var(--g)">4.69%</td>
+          <td>2.60%</td><td class="num" style="color:var(--g)">4.88%</td>
+          <td>2.60%</td><td class="num" style="color:var(--g)">5.12%</td>
+          <td><span class="tag tag-g">초과달성</span></td>
+        </tr>
+        <tr>
+          <td>시청전환율</td>
+          <td>40.04%</td><td class="num">40.38%</td>
+          <td>40.04%</td><td class="num">38.96%</td>
+          <td>40.99%</td><td class="num" style="color:var(--r)">37.86%</td>
+          <td>41.60%</td><td class="num" style="color:var(--r)">36.12%</td>
+          <td>41.60%</td><td class="num" style="color:var(--r)">39.52%</td>
+          <td><span class="tag tag-r">하락 추세</span></td>
+        </tr>
+        <tr>
+          <td>구매전환율</td>
+          <td>8.21%</td><td class="num" style="color:var(--g)">8.73%</td>
+          <td>8.21%</td><td class="num">8.01%</td>
+          <td>8.86%</td><td class="num" style="color:var(--r)">7.85%</td>
+          <td>8.99%</td><td class="num" style="color:var(--r)">6.47%</td>
+          <td>8.99%</td><td class="num" style="color:var(--r)">7.86%</td>
+          <td><span class="tag tag-r">하락 추세</span></td>
+        </tr>
+        <tr>
+          <td>프로모션 기여도</td>
+          <td>34.88%</td><td class="num">32.34%</td>
+          <td>34.88%</td><td class="num" style="color:var(--g)">39.77%</td>
+          <td>34.88%</td><td class="num" style="color:var(--r)">28.61%</td>
+          <td>–</td><td class="num" style="color:var(--text-2)">미수집</td>
+          <td>–</td><td class="num" style="color:var(--text-2)">미수집</td>
+          <td><span class="tag tag-y">미수집</span></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+<!-- END TAB 4 -->
+
+
+<!-- ════════════════════════════════════════════════
+     TAB 5: AI 분석
+════════════════════════════════════════════════ -->
+<div class="tab-section" id="tab-ai">
+  <div class="page-head">
+    <h1 class="page-title">🤖 <em>AI 데이터 분석</em></h1>
+    <p class="page-sub">라이브배너 RAW + 주간지표 데이터 기반 · 질문하면 맥락 포함 답변 · Groq / Gemini / Claude 지원</p>
+  </div>
+
+  <!-- API 설정 -->
+  <div class="ai-settings-bar">
+    <label>모델</label>
+    <select id="ai-provider">
+      <option value="groq">Groq (llama-3.3-70b) — 무료 · 빠름</option>
+      <option value="gemini">Gemini (gemini-1.5-flash) — 무료 · 최신</option>
+      <option value="claude">Claude (claude-sonnet-4-6) — 유료 · 정확</option>
+    </select>
+    <label>API 키</label>
+    <input class="ai-key-input" type="password" id="ai-key" placeholder="sk-... 또는 gsk_... 입력">
+    <button class="ai-save-btn" onclick="saveAIKey()">저장</button>
+    <span class="ai-key-status" id="ai-key-status"></span>
+  </div>
+
+  <!-- 빠른 질문 -->
+  <div class="ai-quick-row">
+    <button class="ai-quick-btn" onclick="askQuick(this)">📉 2·3월 라이브배너 CTR 왜 저조한가?</button>
+    <button class="ai-quick-btn" onclick="askQuick(this)">📊 톱배너 성과 최고/최저 구간 분석</button>
+    <button class="ai-quick-btn" onclick="askQuick(this)">👁 시청전환율 하락 원인 분석</button>
+    <button class="ai-quick-btn" onclick="askQuick(this)">🎯 현재 KPI 달성률 요약 및 3월 전망</button>
+    <button class="ai-quick-btn" onclick="askQuick(this)">🏆 지금까지 성과가 가장 좋았던 주차와 이유</button>
+    <button class="ai-quick-btn" onclick="askQuick(this)">💡 배너 CTR 개선을 위한 전략 제안</button>
+  </div>
+
+  <!-- 채팅 -->
+  <div class="ai-chat-area" id="ai-chat">
+    <div class="ai-chat-empty" id="ai-empty">
+      <div class="ai-big-icon">🤖</div>
+      <div>위 빠른 질문을 누르거나, 아래 입력창에 직접 질문하세요.<br>라이브배너 RAW(20주) · 주간 배너/퍼널 지표(24주) 데이터를 기반으로 답변합니다.</div>
+    </div>
+  </div>
+
+  <!-- 입력 -->
+  <div class="ai-input-row">
+    <textarea class="ai-textarea" id="ai-input" placeholder="예: 1월 26일 주 라이브배너 CTR 9.24%가 특히 높았던 이유가 뭔가요?" rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI()}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,130)+'px'"></textarea>
+    <button class="ai-send-btn" id="ai-send" onclick="sendAI()">전송 ↑</button>
+  </div>
+</div>
+<!-- END TAB 5 -->
+
+<!-- ═══════════════════════════════════════════════
+  TAB 6 — 인사이트 피드
+════════════════════════════════════════════════ -->
+<div class="tab-section" id="tab-feed">
+  <div class="page-head">
+    <h2 class="page-title">인사이트 피드</h2>
+    <p class="page-sub">Slack #team-온사이트전략팀 · 데일리 인사이트 자동 수집 (매일 18:00 업데이트)</p>
+  </div>
+  <div class="feed-update-bar">
+    <span style="color:var(--g)">●</span>
+    마지막 업데이트: <span id="feed-updated-at">–</span>
+    <span style="margin-left:auto;color:var(--text-3)">매일 18:00 자동 갱신</span>
+  </div>
+  <div class="feed-view-toggle">
+    <button class="feed-view-btn active" onclick="setFeedView('weekly',this)">위클리 리포트</button>
+    <button class="feed-view-btn" onclick="setFeedView('daily',this)">데일리 피드</button>
+  </div>
+  <div id="weekly-container"></div>
+  <div id="feed-container" style="display:none"></div>
+</div>
+<!-- END TAB 6 -->
+
+</div><!-- /container -->
+
+<script>
+// ════════════════════════════════════════════════
+//   SLACK FEED (Cron이 매일 18:00 업데이트)
+// ════════════════════════════════════════════════
+// [SLACK_FEED_START]
+const SLACK_FEED = [];
+// [SLACK_FEED_END]
+
+// [WEEKLY_INSIGHTS_START]
+const WEEKLY_INSIGHTS = [
+  {
+    week: '3월 3주차',
+    range: '2026.03.16 ~ 2026.03.22',
+    highlights: [
+      {
+        type: 'issue',
+        title: '사후 배너 소재 피로도 확인 → 교체 주기 기준화 필요',
+        desc: '슈퍼위크 사후 배너 CTR이 2.20% → 1.09%로 급락한 뒤, 소재를 선착순시크릿으로 교체하자 CTR과 주문이 함께 회복됐다. 동일 소재 3일 이상 운영 시 반응 소진 패턴이 반복되고 있음. 사후 배너 소재 교체 주기를 2일 이내로 기준화하는 운영 가이드 수립 검토 필요.',
+        date: '3/16~3/22',
+        tags: ['톱배너', '소재운영', '액션필요'],
+      },
+      {
+        type: 'issue',
+        title: '위클리스페셜라이브 다수 배너 분산 편성 → 반복적 저효율 패턴',
+        desc: '3/19 예수진화장품연구소를 4개 배너로 분산 편성한 결과 CTR 0.35~0.89%, 팔로우 0~2명으로 저효율. 전주에도 동일 셀러의 다수 배너 편성에서 CTR 1% 미만 패턴 반복 확인. 위클리스페셜라이브의 배너 수 축소 및 소구 포인트 집중 재설계가 필요하다.',
+        date: '3/19 (목)',
+        tags: ['톱배너', '편성전략', '액션필요'],
+      },
+      {
+        type: 'info',
+        title: '단일 고효율 이벤트 부재가 주간 평균 CTR을 결정',
+        desc: '2주차: 마녀생일절 CTR 5.12%가 주간 평균을 견인. 3주차: 이에 준하는 앵커 이벤트가 없어 주간 일평균 CTR 2.65%, 전주(2.92%) 대비 -9.2% 하락. 마녀생일절 제외 시 평일 CTR은 비슷한 수준으로, 주간 성과 차이는 앵커 이벤트 1건의 유무로 만들어지고 있다.',
+        date: '3월 3주차',
+        tags: ['톱배너', '주간분석'],
+      },
+      {
+        type: 'test',
+        title: '배너 수 절반 줄였어도 팔로우 총량 유지 → 소재 효율 중심 운영 유효',
+        desc: '3월 배너 수는 2월 대비 절반 수준으로 감소했으나, 총 팔로우는 239명 → 236명으로 거의 동일하게 유지됐다. 배너별 팔로우 효율이 상대적으로 높아진 결과로, 배너 수 확대보다 고효율 소재 선택과 배치 집중 운영이 팔로우 성과에 더 효과적임을 시사한다.',
+        date: '3월 슈퍼위크',
+        tags: ['톱배너', '팔로우', '효율분석'],
+      },
+      {
+        type: 'done',
+        title: '지혜로운일상, CTR·구매전환·GMV 전 지표 주간 최고 성과 달성',
+        desc: '슈퍼그리퍼 중 지혜로운일상이 LB_2 기준 CTR 9.42%로 가장 높은 성과를 기록하며 구매전환율과 GMV 전 지표에서도 주간 최고를 달성. 팔로우 관점에서는 철수와영희가 신규팔로우 +38명으로 최다. 성과 채널의 편성 패턴 분석 및 우선 편성 검토 필요.',
+        date: '3월 슈퍼위크',
+        tags: ['라이브배너', '슈퍼그리퍼', '우수사례'],
+      },
+      {
+        type: 'info',
+        title: '와이드배너 + 톱배너 동시 운영 시 카니발 가능성 신호 포착',
+        desc: '3/16 럭키드롭 와이드배너(CTR 30.3%)와 톱배너를 동시 운영한 구간에서 카니발(자원 충돌) 가능성이 확인됐다. 동일 셀러·프로모션의 와이드+톱 동시 편성 시 트래픽 분산 여부를 모니터링하고, 단독 vs 병행 운영에 따른 클릭·팔로우 차이를 비교하는 기준 수립이 필요하다.',
+        date: '3/16 (월)',
+        tags: ['와이드배너', '카니발', '모니터링'],
+      },
+    ],
+    daily: [
+      {
+        date: '3/16', day: '일',
+        items: [
+          '톱배너 평균 CTR <strong>2.17%</strong>, 전일 마녀생일절 고효율 부재 영향 (-58.4%)',
+          '럭키드롭 와이드배너 CTR <strong>30.3%</strong> (1월 20%·2월 23% 대비 상승)',
+          '와이드+톱 동시 운영 카니발 가능성 포착 → 모니터링 필요',
+        ],
+      },
+      {
+        date: '3/17', day: '월',
+        items: [
+          '톱배너 평균 CTR <strong>2.03%</strong>, 라이브 톱배너 재개로 시청 유도 효과 확인',
+          '슈퍼위크 사후 배너: CTR 2.19%→1.16% 하락, <strong>동일 소재 반복 클릭 소진</strong> 확인',
+          '라이브배너: 직원가(스탈리쉬) 이중 편성으로 CTR·구매·팔로우 모두 상위권',
+        ],
+      },
+      {
+        date: '3/18', day: '화',
+        items: [
+          '톱배너 평균 CTR <strong>1.39%</strong>, 전일 대비 -31.5% — 사전오늘 배너 2개 분산 운영 영향',
+          '봄신상(2.12%) vs 봄신상수정(0.95%): <strong>동일 소재 중복 분산으로 클릭 충돌</strong>',
+          '개그맨김인석이 전체 GMV 49% 집중 → 단일 채널 의존도 주의',
+        ],
+      },
+      {
+        date: '3/19', day: '수',
+        items: [
+          '톱배너 평균 CTR <strong>1.49%</strong>, 소폭 반등 (+7.2%)',
+          '위클리스페셜라이브 4배너 분산: CTR 0.35~0.89% → <strong>저효율 반복 패턴</strong>',
+          '라이브배너 구매전환율 <strong>9.17% (+204%)</strong>, GMV <strong>1.26억 (+3,166%)</strong> 급증',
+          '아임마삐·개그맨김인석·마녀옷장·예수진화장품연구소가 성과 견인',
+        ],
+      },
+      {
+        date: '3/20~22', day: '목~토',
+        items: [
+          '슈퍼그리퍼 주간 편성 37개 채널, LB_2 기준 신규 팔로우 <strong>410명 증가</strong>',
+          '지혜로운일상 CTR <strong>9.42%</strong> — 구매전환·GMV 전 지표 주간 최고',
+          '주말 CTR: 채널 수 감소 + 마녀봄신상 영향으로 전주 대비 반등',
+        ],
+      },
+    ],
+    stats: [
+      { label: '3주차 일평균 CTR', value: '2.65%', sub: '전주 2.92% 대비 -9.2%', color: 'var(--r)' },
+      { label: '슈퍼그리퍼 팔로우', value: '410명', sub: 'LB_2 기준 주간 신규', color: 'var(--g)' },
+      { label: '최고 라이브배너', value: '9.42%', sub: '지혜로운일상 CTR', color: 'var(--b)' },
+      { label: '3/19 GMV', value: '+3,166%', sub: '전일 대비 라이브배너', color: 'var(--y)' },
+    ],
+  },
+];
+// [WEEKLY_INSIGHTS_END]
+
+// ════════════════════════════════════════════════
+//   DATA (실제 구글 시트 기반)
+// ════════════════════════════════════════════════
+
+// ─ 데이터 소스 ─
+// Oct-Dec: 1IdDujaliw50jSeFpV68Z0sPnbaPE9dOX2BAPyur3_f8 › 1-0.주간지표 DZ→HT열
+// Jan-Mar: 1IdDujaliw50jSeFpV68Z0sPnbaPE9dOX2BAPyur3_f8 › 26년_주간지표 GK→JV열
+// 주차 레이블 = 주 시작일(월요일) 기준, 총 24주 (10/6 ~ 3/16)
+const W = {
+  labels: [
+    '10/6','10/13','10/20','10/27','11/3','11/10','11/17','11/24',
+    '12/1','12/8','12/15','12/22','12/29',
+    '1/5','1/12','1/19','1/26',
+    '2/2','2/9','2/16','2/23',
+    '3/2','3/9','3/16'
+  ],
+
+  // 톱배너 CTR (%)
+  // Oct-Dec: 1-0.주간지표 "ㄴ 톱배너" 행
+  // Jan-Mar: 26년_주간지표 Row36 "톱배너" 행
+  topBanner: [
+    1.47, 1.64, 2.91, 1.60, 3.03, 3.26, 5.19, 4.11,
+    2.99, 3.89, 7.73, 2.99, 2.15,
+    1.36, 2.47, 2.18, 2.91,
+    2.02, 2.16, 1.78, 2.11,
+    2.10, 2.97, 2.66
+  ],
+
+  // 홈ATF 배너 CTR (%)
+  // Oct-Dec: 1-0.주간지표 "ㄴ 프로모션탭" 행
+  // Jan-Mar: 26년_주간지표 Row34 "홈 ATF 배너" 행 (상단 전체 영역 집계)
+  promoTab: [
+    1.50, 1.66, 1.89, 2.57, 1.65, 1.89, 2.25, 1.98,
+    1.70, 1.71, 3.26, 2.01, null,
+    2.69, 4.08, 7.38, 3.68,
+    6.50, 3.13, 3.27, 3.03,
+    3.16, 3.97, 9.91
+  ],
+
+  // 라이브배너 CTR (%)
+  // Oct-Dec: 1-0.주간지표 "ㄴ 라이브배너" 행
+  // Jan-Mar: 26년_주간지표 Row37 "라이브배너" 행
+  liveBanner: [
+    3.72, 4.31, 3.92, 3.34, 4.38, 3.86, 2.93, 3.67,
+    4.61, 4.39, 3.41, 3.83, 3.58,
+    4.02, 5.70, 4.28, 4.74,
+    3.47, 5.56, 5.77, 4.72,
+    4.98, 6.05, 4.34
+  ],
+
+  // 시청전환 (%)
+  // Oct-Dec: 1-0.주간지표 / Jan-Mar: 26년_주간지표 Row28
+  viewConv: [
+    41.44, 41.72, 41.10, 40.18, 39.87, 40.80, 40.20, 40.17,
+    39.91, 40.27, 38.30, 37.72, 37.06,
+    37.99, 39.15, 37.84, 36.44,
+    33.58, 36.46, 37.85, 36.59,
+    38.63, 40.17, 39.77
+  ],
+
+  // 구매전환 (%)
+  // Oct-Dec: 1-0.주간지표 / Jan-Mar: 26년_주간지표 Row31
+  buyConv: [
+    7.73, 9.21, 9.37, 8.51, 8.54, 8.90, 8.78, 8.24,
+    8.19, 8.04, 9.06, 7.15, 6.36,
+    7.56, 7.43, 8.50, 7.89,
+    6.91, 5.03, 6.01, 7.94,
+    7.37, 8.30, 7.92
+  ],
+
+  // 프로모션 기여도 (%) — Jan-Mar 미수집
+  promoContrib: [
+    37.62, 11.65, 99.76, 23.38, 5.53, 11.20, 95.09, 7.48,
+    20.57, 14.19, 99.20, 11.56, 0.00,
+    null, null, null, null, null, null, null, null, null, null, null
+  ],
+
+  // KPI 목표 — 기간별 상이 (26년_KPI 시트)
+  // Oct-Dec: 2.04% / 40.04% / 8.21%
+  // Jan:     2.54% / 40.99% / 8.86%
+  // Feb-Mar: 2.60% / 41.60% / 8.99%
+  topBannerTarget: [
+    2.04, 2.04, 2.04, 2.04, 2.04, 2.04, 2.04, 2.04,
+    2.04, 2.04, 2.04, 2.04, 2.04,
+    2.54, 2.54, 2.54, 2.54,
+    2.60, 2.60, 2.60, 2.60,
+    2.60, 2.60, 2.60
+  ],
+  viewConvTarget: [
+    40.04, 40.04, 40.04, 40.04, 40.04, 40.04, 40.04, 40.04,
+    40.04, 40.04, 40.04, 40.04, 40.04,
+    40.99, 40.99, 40.99, 40.99,
+    41.60, 41.60, 41.60, 41.60,
+    41.60, 41.60, 41.60
+  ],
+  buyConvTarget: [
+    8.21, 8.21, 8.21, 8.21, 8.21, 8.21, 8.21, 8.21,
+    8.21, 8.21, 8.21, 8.21, 8.21,
+    8.86, 8.86, 8.86, 8.86,
+    8.99, 8.99, 8.99, 8.99,
+    8.99, 8.99, 8.99
+  ],
+};
+
+// 라이브배너 RAW 주간 집계 (python으로 계산)
+// slots: 구좌(2~6번)별 주간 평균 CTR — RAW 시트 구좌번호 필터링 집계 후 채워야 함
+const LB = {
+  labels: ['10/27','11/3','11/10','11/17','11/24','12/1','12/8','12/15','12/22','12/29','1/5','1/12','1/19','1/26','2/2','2/9','2/16','2/23','3/2','3/9'],
+  ctr:    [3.94,   6.03,  5.11,  3.84,  5.06,  5.49,  5.49, 4.62,  5.14,  6.19,  5.48, 5.09, 4.87,  9.24, 4.15, 1.92, 2.65, 2.43, 2.33, 2.29],
+  count:  [32,     276,   264,   348,   320,   144,   194,  376,   228,   120,   188,  252,  346,   246,  296,  224,  104,  332,  166,  135],
+  // 구좌별 주간 평균 CTR — 라이브배너 RAW 시트 집계 (10/27 ~ 3/9, 20주)
+  slots: {
+    '2': { ctr: [3.92, 7.01, 6.14, 4.61, 5.04, 6.65, 6.71, 6.77, 6.0, 6.57, 8.23, 9.46, 7.43, 16.79, 5.99, 2.97, 3.01, 2.84, 2.73, 4.06], count: [28, 163, 156, 142, 118, 73, 102, 144, 125, 74, 54, 54, 100, 67, 93, 68, 50, 139, 74, 106] },
+    '3': { ctr: [4.08, 3.5, 3.4, 3.18, 4.48, 3.76, 4.47, 2.95, 4.35, 6.53, 4.48, 4.19, 3.86, 8.73, 3.58, 1.51, 2.33, 1.75, 1.51, 1.3], count: [4, 74, 77, 102, 80, 40, 52, 114, 74, 28, 94, 112, 102, 67, 84, 94, 36, 112, 56, 88] },
+    '4': { ctr: [null, 7.24, 3.48, 3.5, 5.91, 4.4, 3.65, 3.21, 3.12, 3.38, 4.47, 3.85, 3.23, 8.48, 3.14, 1.32, 1.59, 2.07, 1.33, 1.49], count: [0, 24, 18, 74, 50, 14, 24, 58, 22, 12, 26, 62, 55, 18, 37, 36, 8, 48, 16, 22] },
+    '5': { ctr: [null, null, 6.7, 0.97, 5.08, 6.05, 2.9, 2.2, null, 8.05, 2.29, 2.06, 3.4, 3.53, 2.89, 0.9, 0.92, 0.55, 2.14, 0.97], count: [0, 0, 2, 6, 6, 2, 10, 10, 0, 2, 6, 18, 54, 79, 57, 16, 2, 4, 6, 24] },
+    '6': { ctr: [null, 4.63, null, 4.22, 4.46, 2.58, null, 4.3, 4.42, null, 2.71, 3.18, 5.22, 9.73, 3.93, 2.11, 3.35, 4.67, 5.03, 6.58], count: [0, 6, 0, 12, 20, 2, 0, 22, 2, 0, 4, 2, 19, 2, 14, 8, 8, 20, 10, 20] },
+    '7': { ctr: [null, null, null, 2.49, 7.72, null, null, 2.22, null, null, 5.87, null, 3.22, 5.26, 3.19, 3.33, null, 2.29, 5.36, 1.85], count: [0, 0, 0, 4, 2, 0, 0, 2, 0, 0, 2, 0, 6, 2, 12, 2, 0, 4, 2, 2] },
+    '9': { ctr: [null, 7.41, 4.55, null, 7.02, 10.42, 5.21, null, 3.68, 3.39, null, null, 14.71, null, null, null, null, null, null, null], count: [0, 6, 2, 0, 7, 1, 3, 0, 2, 3, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0] },
+  },
+};
+
+// 배너 영역별 CTR – 9월 기준 (월별지표 시트)
+const AREA = {
+  labels: ['라이브배너','큐레이션탭','톱배너','라이브예고','쇼츠카드','소식','카드배너B','아이콘','카드배너A'],
+  ctr:    [3.55,        1.93,        1.90,   1.69,        1.45,      1.43, 0.86,      0.93,  0.46],
+};
+
+// 상단 와이드배너 이벤트별 CTR (최상단배너 지표)
+const WIDE = {
+  labels: ['12/15 슈퍼위크','12/16 프로모션','12/17 시청쿠폰','12/18 시청쿠폰','12/19','12/20','12/21','1/19 럭키드롭','1/19 아임마삐','1/19 저녁','1/20','1/21','1/21 사전','1/22','1/22 저녁','1/23','2/2 럭키드롭','2/2 김인석','2/2 김태진','2/3 박성광','2/3 아임마삐','2/4 이솔이','2/4 나래고기','2/4 아임마삐','2/5 쓰리백(사전)','2/5 쓰리백(라이브)','2/5 김인석','2/5 박성광','2/6 마녀옷장','2/6 흥정대황군','2/7 아임마삐','2/8 김태진'],
+  ctr:    [26.00,           25.88,           24.11,           25.12,           27.37, 26.75, 24.71, 20.46,  20.44,   21.25, 22.88, 22.38, 21.31, 22.67, 20.40, 22.58, 23.20, 20.03, 19.68, 18.57, 19.82, 19.91, 19.44, 18.48, 15.48, 19.72, 19.41, 20.13, 18.92, 18.01, 10.37, 19.70],
+};
+
+// ════════════════════════════════════════════════
+//   CHART DEFAULTS
+// ════════════════════════════════════════════════
+Chart.defaults.color = '#64748b';
+Chart.defaults.font.family = "'Pretendard', sans-serif";
+Chart.defaults.font.size = 11;
+
+const TOOLTIP_OPTS = {
+  backgroundColor: '#16162a',
+  borderColor: 'rgba(255,255,255,.1)',
+  borderWidth: 1,
+  padding: 10,
+  titleFont: { size: 11, weight: '600' },
+  bodyFont: { size: 11 },
+  titleColor: '#e2e8f0',
+  bodyColor: '#94a3b8',
+};
+
+const GRID = 'rgba(255,255,255,0.04)';
+
+function baseOpts(extra) {
+  return Object.assign({
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: TOOLTIP_OPTS,
+    },
+    scales: {
+      x: { grid: { color: GRID }, ticks: { maxTicksLimit: 10, maxRotation: 0 } },
+      y: { grid: { color: GRID }, ticks: { callback: v => v + '%' } },
+    },
+  }, extra || {});
+}
+
+function lineDset(label, data, color, fill = false, hidden = false) {
+  return {
+    label, data, hidden,
+    borderColor: color,
+    backgroundColor: fill ? color.replace(')',', 0.08)').replace('rgb','rgba') : 'transparent',
+    borderWidth: 2,
+    pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: color,
+    tension: 0.3, fill,
+  };
+}
+
+function buildLegend(containerId, chartInst) {
+  const c = document.getElementById(containerId);
+  chartInst.data.datasets.forEach((ds, i) => {
+    const el = document.createElement('div');
+    el.className = 'leg-item';
+    el.innerHTML = `<div class="leg-line" style="background:${ds.borderColor}"></div>${ds.label}`;
+    el.onclick = () => {
+      ds.hidden = !ds.hidden;
+      el.classList.toggle('off', ds.hidden);
+      chartInst.update();
+    };
+    c.appendChild(el);
+  });
+}
+
+// ════════════════════════════════════════════════
+//   TAB 1: 종합 현황 차트
+// ════════════════════════════════════════════════
+function updateKpiCards() {
+  const topArr  = sliceW('topBanner');
+  const viewArr = sliceW('viewConv');
+  const buyArr  = sliceW('buyConv');
+  const tgtTopArr  = sliceW('topBannerTarget');
+  const tgtViewArr = sliceW('viewConvTarget');
+  const tgtBuyArr  = sliceW('buyConvTarget');
+  const wLblArr = sliceW('labels');
+  // 종합현황 KPI: 2번 구좌 우선, 없으면 전체 집계 폴백
+  const [lbS, lbE] = MONTH_RANGES_LB[activeFilter] || [0, 19];
+  const lb2 = LB.slots['2'];
+  const hasSlot2 = lb2 && lb2.ctr.some(v => v !== null);
+  const lbCtrArr = hasSlot2 ? lb2.ctr.slice(lbS, lbE + 1) : LB.ctr.slice(lbS, lbE + 1);
+  const lbLblArr = LB.labels.slice(lbS, lbE + 1);
+
+  const lastTop  = topArr[topArr.length - 1];
+  const lastView = viewArr[viewArr.length - 1];
+  const lastBuy  = buyArr[buyArr.length - 1];
+  const lastTgtTop  = tgtTopArr[tgtTopArr.length - 1];
+  const lastTgtView = tgtViewArr[tgtViewArr.length - 1];
+  const lastTgtBuy  = tgtBuyArr[tgtBuyArr.length - 1];
+  const lastWk  = wLblArr[wLblArr.length - 1] || '';
+
+  const lbValid = lbCtrArr.filter(v => v != null);
+  const lbAvg   = lbValid.length ? (lbValid.reduce((a, b) => a + b, 0) / lbValid.length).toFixed(2) : '–';
+  const lbMax   = lbValid.length ? Math.max(...lbValid) : 0;
+  const lbMaxIdx = lbCtrArr.indexOf(lbMax);
+  const lbMaxWk  = lbLblArr[lbMaxIdx] || '';
+
+  const topMax = Math.max(...topArr.filter(v => v != null));
+  const topOk  = lastTop  >= lastTgtTop;
+  const viewOk = lastView >= lastTgtView;
+  const buyOk  = lastBuy  >= lastTgtBuy;
+
+  // 기간 라벨: 필터 정보 또는 최신 주차
+  const periodInfo = FILTER_INFO[activeFilter] || '';
+  document.getElementById('kpi-period-label').textContent =
+    `${lastWk}주 기준 (최신) · ${periodInfo}`;
+
+  document.getElementById('kv-top').textContent  = lastTop;
+  document.getElementById('kv-live').textContent = lbAvg;
+  document.getElementById('kv-view').textContent = lastView;
+  document.getElementById('kv-buy').textContent  = lastBuy;
+
+  document.getElementById('kf-top').innerHTML =
+    `<span class="tag ${topOk ? 'tag-g' : 'tag-r'}">${topOk ? '▲' : '▼'} 목표 ${lastTgtTop}% ${topOk ? '달성' : '미달'}</span>` +
+    `<span class="kpi-foot-label">기간 최고 ${topMax}%</span>`;
+
+  document.getElementById('kf-live').innerHTML =
+    `<span class="tag tag-y">${lbMaxWk}주 최고 ${lbMax}%</span>` +
+    `<span class="kpi-foot-label">${hasSlot2 ? '2번구좌 평균' : '전체집계 평균'}</span>`;
+
+  document.getElementById('kf-view').innerHTML =
+    `<span class="tag ${viewOk ? 'tag-g' : 'tag-r'}">목표 ${lastTgtView}%</span>` +
+    `<span class="kpi-foot-label">${(lastView - lastTgtView).toFixed(2)}%p ${viewOk ? '초과' : '미달'}</span>`;
+
+  document.getElementById('kf-buy').innerHTML =
+    `<span class="tag ${buyOk ? 'tag-g' : 'tag-r'}">목표 ${lastTgtBuy}%</span>` +
+    `<span class="kpi-foot-label">${(lastBuy - lastTgtBuy).toFixed(2)}%p ${buyOk ? '초과' : '미달'}</span>`;
+}
+
+function buildOverview() {
+  updateKpiCards();
+  const wLabels = sliceW('labels'), wTop = sliceW('topBanner'), wLive = sliceW('liveBanner'), wPromo = sliceW('promoTab');
+  const lbLabels = sliceLB('labels'), lbCtr = sliceLB('ctr');
+
+  // 배너 트렌드
+  const ctx1 = document.getElementById('c-bannerTrend').getContext('2d');
+  window.bannerTrendChart = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: wLabels,
+      datasets: [
+        lineDset('톱배너 CTR', wTop, '#a78bfa', true),
+        lineDset('라이브배너 CTR', wLive, '#34d399', true),
+        {
+          type: 'bar',
+          label: '홈ATF 배너 CTR',
+          data: wPromo,
+          backgroundColor: 'rgba(251,191,36,.5)',
+          borderColor: 'rgba(251,191,36,.8)',
+          borderWidth: 1,
+          borderRadius: 3,
+          borderSkipped: false,
+          yAxisID: 'y',
+        },
+      ],
+    },
+    options: baseOpts({ plugins: { ...baseOpts().plugins, tooltip: { ...TOOLTIP_OPTS, callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw != null ? ctx.raw + '%' : '-'}` } } } }),
+  });
+  buildLegend('leg-bannerTrend', window.bannerTrendChart);
+
+  // 라이브배너 RAW 주간
+  const ctx2 = document.getElementById('c-liveRaw').getContext('2d');
+  new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: lbLabels,
+      datasets: [lineDset('라이브배너 방송별 avg CTR', lbCtr, '#22d3ee', true)],
+    },
+    options: baseOpts({
+      plugins: { legend: { display: false }, tooltip: { ...TOOLTIP_OPTS, callbacks: { label: c => ` CTR: ${c.raw}%` } } },
+    }),
+  });
+
+  // 월별 배너 CTR 비교 (필터 연동 grouped bar)
+  const ctx3 = document.getElementById('c-areaCompare').getContext('2d');
+  const _allM      = ['10','11','12','1','2','3'];
+  const _allMLabel = ['10월','11월','12월','1월','2월','3월'];
+  const _mFilter = {
+    all: _allM, '25': ['10','11','12'], '26': ['1','2','3'],
+  };
+  const mKeys = _mFilter[activeFilter] || [activeFilter];
+  const mLabels3 = mKeys.map(m => _allMLabel[_allM.indexOf(m)]);
+
+  // select 동기화
+  const areaModeEl = document.getElementById('area-mode-select');
+  if (areaModeEl) areaModeEl.value = activeAreaMode;
+  const modeLabel = { avg: '월 평균', median: '월 중간값', max: '월 최고', min: '월 최저' }[activeAreaMode];
+  const subEl = document.getElementById('area-compare-sub');
+  if (subEl) subEl.innerHTML = `톱배너 · 라이브배너 · 홈ATF 배너 ${modeLabel} &nbsp;|&nbsp; 필터 연동`;
+
+  function _mAvg(key, mKey) {
+    const [s, e] = MONTH_RANGES_W[mKey] || [0, 23];
+    const vals = W[key].slice(s, e + 1).filter(v => v != null);
+    if (!vals.length) return null;
+    if (activeAreaMode === 'max') return +Math.max(...vals).toFixed(2);
+    if (activeAreaMode === 'min') return +Math.min(...vals).toFixed(2);
+    if (activeAreaMode === 'median') {
+      const s = [...vals].sort((a, b) => a - b);
+      const m = Math.floor(s.length / 2);
+      return +(s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2).toFixed(2);
+    }
+    return +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2);
+  }
+
+  new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: mLabels3,
+      datasets: [
+        { label: `톱배너 (${modeLabel})`,     data: mKeys.map(m => _mAvg('topBanner',  m)), backgroundColor: 'rgba(167,139,250,.75)', borderRadius: 4, borderSkipped: false },
+        { label: `라이브배너 (${modeLabel})`, data: mKeys.map(m => _mAvg('liveBanner', m)), backgroundColor: 'rgba(52,211,153,.70)',  borderRadius: 4, borderSkipped: false },
+        { label: `홈ATF 배너 (${modeLabel})`, data: mKeys.map(m => _mAvg('promoTab',   m)), backgroundColor: 'rgba(251,191,36,.65)',  borderRadius: 4, borderSkipped: false },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, boxHeight: 10, font: { size: 11 }, padding: 14 } },
+        tooltip: { ...TOOLTIP_OPTS, callbacks: { label: c => ` ${c.dataset.label}: ${c.raw != null ? c.raw + '%' : '-'}` } },
+      },
+      scales: {
+        x: { grid: { color: GRID } },
+        y: { grid: { color: GRID }, ticks: { callback: v => v + '%' }, beginAtZero: true },
+      },
+    },
+  });
+}
+
+// ════════════════════════════════════════════════
+//   TAB 2: 배너 상세
+// ════════════════════════════════════════════════
+function buildBanner() {
+  // 톱배너 + 동적 목표 라인
+  const ctx = document.getElementById('c-topBannerDetail').getContext('2d');
+  const wL = sliceW('labels'), wTB = sliceW('topBanner'), wTgt = sliceW('topBannerTarget');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: wL,
+      datasets: [
+        {
+          type: 'line',
+          label: '목표 (기간별 상이)',
+          data: wTgt,
+          borderColor: '#fb7185',
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          pointRadius: 0,
+          fill: false,
+          tension: 0,
+        },
+        {
+          type: 'bar',
+          label: '톱배너 CTR',
+          data: wTB,
+          backgroundColor: wTB.map((v, i) => {
+            const t = wTgt[i];
+            return v >= 5 ? 'rgba(167,139,250,.9)' : v >= t ? 'rgba(167,139,250,.6)' : 'rgba(167,139,250,.28)';
+          }),
+          borderRadius: 4, borderSkipped: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, boxHeight: 10, font: { size: 11 } } }, tooltip: { ...TOOLTIP_OPTS, callbacks: { label: c => ` ${c.dataset.label}: ${c.raw !== null ? c.raw + '%' : '-'}` } } },
+      scales: {
+        x: { grid: { color: GRID }, ticks: { maxRotation: 30, font: { size: 10 } } },
+        y: { grid: { color: GRID }, ticks: { callback: v => v + '%' } },
+      },
+    },
+  });
+
+  // 주간 성과 테이블
+  const tbl = document.getElementById('tbl-weekly');
+  const wAll = { labels: sliceW('labels'), topBanner: wTB, liveBanner: sliceW('liveBanner'), promoTab: sliceW('promoTab'), topBannerTarget: wTgt };
+  tbl.innerHTML = `<thead><tr><th>주차</th><th>톱배너</th><th>목표</th><th>라이브배너</th><th>홈ATF배너</th><th>달성여부</th></tr></thead><tbody>` +
+    wAll.labels.map((wk, i) => {
+      const top = wAll.topBanner[i], live = wAll.liveBanner[i], promo = wAll.promoTab[i], tgt = wAll.topBannerTarget[i];
+      const ach = top >= tgt;
+      return `<tr>
+        <td style="color:var(--text-3);font-size:11px;">${wk}주</td>
+        <td class="num" style="color:${top>=5?'var(--g)':top>=tgt?'var(--v)':'var(--r)'}">${top}%</td>
+        <td class="num" style="color:var(--text-3)">${tgt}%</td>
+        <td class="num">${live}%</td>
+        <td class="num">${promo != null ? promo + '%' : '-'}</td>
+        <td><span class="tag ${ach?'tag-g':'tag-r'}">${ach?'달성':'미달'}</span></td>
+      </tr>`;
+    }).join('') + '</tbody>';
+
+  // 와이드배너
+  const ctx2 = document.getElementById('c-wideBanner').getContext('2d');
+  new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: WIDE.labels.map(l => l.length > 10 ? l.slice(0,10)+'…' : l),
+      datasets: [{
+        data: WIDE.ctr,
+        backgroundColor: 'rgba(251,191,36,.55)',
+        borderColor: '#fbbf24',
+        borderWidth: 1, borderRadius: 4, borderSkipped: false,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...TOOLTIP_OPTS, callbacks: { label: c => ` 와이드배너 CTR: ${c.raw}%` } } },
+      scales: {
+        x: { grid: { color: 'transparent' }, ticks: { font: { size: 9.5 }, maxRotation: 45 } },
+        y: { grid: { color: GRID }, ticks: { callback: v => v + '%' }, min: 15 },
+      },
+    },
+  });
+
+  // 배너 히트맵 (텍스트 기반)
+  buildBannerHeatmap();
+}
+
+function buildBannerHeatmap() {
+  const container = document.getElementById('bannerHeatmap');
+  const levels = W.labels.map((lbl, i) => ({ label: lbl + '주', val: W.topBanner[i], tgt: W.topBannerTarget[i] }));
+  const max = Math.max(...levels.map(l => l.val));
+  container.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:4px;';
+  levels.forEach(({ label, val, tgt }) => {
+    const pct = val / max;
+    const a = 0.08 + pct * 0.78;
+    const hit = val >= tgt;
+    const cell = document.createElement('div');
+    cell.style.cssText = `
+      padding:6px 3px; border-radius:5px; text-align:center; cursor:default; position:relative;
+      background:rgba(167,139,250,${a.toFixed(2)}); border:1px solid rgba(167,139,250,${Math.min(1,(a*1.6)).toFixed(2)});
+    `;
+    cell.title = `${label}: ${val}% (목표 ${tgt}%)`;
+    cell.innerHTML = `<div style="font-size:8.5px;color:rgba(255,255,255,.45);margin-bottom:2px">${label.replace('주','')}</div>
+      <div style="font-size:11px;font-weight:700;color:${pct>.5?'#e2e8f0':'#94a3b8'}">${val}%</div>
+      <div style="font-size:8px;margin-top:2px;color:${hit?'#34d399':'#fb7185'}">${hit?'✓':tgt+'%'}</div>`;
+    container.appendChild(cell);
+  });
+}
+
+// ════════════════════════════════════════════════
+//   TAB 3: 라이브배너
+// ════════════════════════════════════════════════
+function buildLive() {
+  // 구좌 select 동기화 + desc 업데이트
+  const selEl = document.getElementById('lb-slot-select');
+  if (selEl) selEl.value = activeLBSlot;
+  const slotName = activeLBSlot === 'all' ? '전체 집계' : `${activeLBSlot}번 구좌`;
+  const slotHasData = activeLBSlot === 'all' ||
+    (LB.slots[activeLBSlot] && LB.slots[activeLBSlot].ctr.some(v => v !== null));
+  const descEl = document.getElementById('lb-slot-desc');
+  if (descEl) descEl.textContent = slotHasData
+    ? `${slotName} 기준`
+    : `${slotName} — 구좌별 데이터는 RAW 시트 처리 후 업데이트 가능`;
+
+  // insight 텍스트 구좌별 업데이트
+  const insightEl = document.getElementById('lb-insight');
+  if (insightEl) {
+    const insights = {
+      all: '<strong>2번구좌 2월 CTR 급락</strong> — 1/26주 집계 9.24%에서 2/9주 1.92%로 급락. 1월 이벤트 종료 후 구조적 하락으로 분석됨. <strong>3월은 2~4% 수준 회복</strong> 중.',
+      '2': '<strong>2번구좌 1/26주 최고 16.79%</strong> — 이벤트 집중 효과로 피크. 2/9주 2.97%로 급락 후 3/9주 4.06%로 회복 중. <strong>전체 집계 대비 2배 이상 높은 CTR</strong> 유지.',
+      '3': '<strong>3번구좌 일관된 3~4%대 유지</strong> — 1/26주 8.73% 피크. 2월 이후 1~2%대로 하락. 방송 수 기준 2번 다음 규모. <strong>2월 이후 부진 지속</strong> 주의.',
+      '4': '<strong>4번구좌 11/3주 7.24% 피크</strong> — 이후 3~4%대 유지하다 2월 이후 1~2%대로 하락. 1/26주 8.48% 반등은 이벤트 효과.',
+      '5': '<strong>5번구좌 운영 불규칙</strong> — 방송 수 자체가 적어 null 구간 다수. 1/19주부터 꾸준히 운영(54~79건). 2월 이후 CTR 1% 미만으로 부진.',
+      '6': '<strong>6번구좌 소규모 운영</strong> — 주간 2~22건 수준. 1/26주 9.73% 이벤트 피크. 3월 들어 5~6%대 개선. <strong>방송 수 대비 CTR 안정적</strong>.',
+      '7': '<strong>7번구좌 비정기 운영</strong> — 주 2~12건 수준의 소규모. 데이터 연속성 낮음.',
+      '9': '<strong>9번구좌 1/19주 14.71% 최고치</strong> — 이후 방송 없음. 단기 이벤트성 운영 구좌.',
+    };
+    insightEl.innerHTML = insights[activeLBSlot] || insights.all;
+  }
+
+  // 듀얼 축 차트
+  const lbL = sliceLB('labels'), lbC = getLBData('ctr'), lbN = getLBData('count');
+  const ctx = document.getElementById('c-liveDual').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: lbL,
+      datasets: [
+        {
+          type: 'line',
+          label: '방송별 평균 CTR (%)',
+          data: lbC,
+          borderColor: '#22d3ee',
+          backgroundColor: 'rgba(34,211,238,.07)',
+          borderWidth: 2, pointRadius: 3, pointHoverRadius: 6,
+          pointBackgroundColor: '#22d3ee',
+          tension: 0.3, fill: true, yAxisID: 'y',
+        },
+        {
+          type: 'bar',
+          label: '방송 수 (건)',
+          data: lbN,
+          backgroundColor: 'rgba(167,139,250,.25)',
+          borderColor: 'rgba(167,139,250,.5)',
+          borderWidth: 1, borderRadius: 3, borderSkipped: false,
+          yAxisID: 'y2',
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, boxHeight: 10, font: { size: 11 }, padding: 16 } },
+        tooltip: { ...TOOLTIP_OPTS, callbacks: { label: c => c.datasetIndex === 0 ? ` CTR: ${c.raw}%` : ` 방송수: ${c.raw}건` } },
+      },
+      scales: {
+        x: { grid: { color: GRID }, ticks: { maxRotation: 30, font: { size: 10 } } },
+        y: { position: 'left', grid: { color: GRID }, ticks: { callback: v => v + '%' }, title: { display: true, text: 'CTR (%)', color: '#22d3ee', font: { size: 10 } } },
+        y2: { position: 'right', grid: { display: false }, ticks: { color: '#a78bfa', font: { size: 10 } }, title: { display: true, text: '방송수', color: '#a78bfa', font: { size: 10 } } },
+      },
+    },
+  });
+
+  // 월별 분포 — 구좌 선택에 따라 동적 계산
+  const _lbMAvg = (mKey) => {
+    const [s, e] = MONTH_RANGES_LB[mKey] || [0, 0];
+    const src = activeLBSlot === 'all' ? LB.ctr : (LB.slots[activeLBSlot] ? LB.slots[activeLBSlot].ctr : LB.ctr);
+    const vals = src.slice(s, e + 1).filter(v => v !== null);
+    return vals.length ? +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : null;
+  };
+  const ctx2 = document.getElementById('c-liveMonth').getContext('2d');
+  new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['10월','11월','12월','1월','2월','3월'],
+      datasets: [{
+        label: `월 평균 CTR (${slotName})`,
+        data: ['10','11','12','1','2','3'].map(m => _lbMAvg(m)),
+        backgroundColor: ['rgba(100,116,139,.5)','rgba(52,211,153,.6)','rgba(96,165,250,.6)','rgba(251,191,36,.6)','rgba(251,113,133,.5)','rgba(167,139,250,.6)'],
+        borderRadius: 5, borderSkipped: false,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...TOOLTIP_OPTS, callbacks: { label: c => ` 평균 CTR: ${c.raw}%` } } },
+      scales: {
+        x: { grid: { color: 'transparent' } },
+        y: { grid: { color: GRID }, ticks: { callback: v => v + '%' } },
+      },
+    },
+  });
+
+  // 방송 수 추이
+  const ctx3 = document.getElementById('c-liveCount').getContext('2d');
+  new Chart(ctx3, {
+    type: 'line',
+    data: {
+      labels: lbL,
+      datasets: [lineDset(`주간 방송 수 (${slotName})`, lbN, '#a78bfa', true)],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...TOOLTIP_OPTS, callbacks: { label: c => ` ${c.raw}건` } } },
+      scales: {
+        x: { grid: { color: GRID }, ticks: { maxRotation: 30, font: { size: 10 } } },
+        y: { grid: { color: GRID }, ticks: { callback: v => v + '건' } },
+      },
+    },
+  });
+}
+
+// ════════════════════════════════════════════════
+//   TAB 4: 퍼널 / KPI
+// ════════════════════════════════════════════════
+function buildFunnel() {
+  // 퍼널 트렌드 + 목표 라인
+  const ctx = document.getElementById('c-funnelTrend').getContext('2d');
+  window.funnelChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sliceW('labels'),
+      datasets: [
+        lineDset('시청전환 (%)', sliceW('viewConv'), '#60a5fa', false),
+        lineDset('구매전환 (%)', sliceW('buyConv'), '#fbbf24', false),
+        {
+          label: '시청전환 목표 (기간별)',
+          data: sliceW('viewConvTarget'),
+          borderColor: 'rgba(96,165,250,.4)',
+          borderWidth: 1.5, borderDash: [5, 4],
+          pointRadius: 0, fill: false, tension: 0,
+        },
+        {
+          label: '구매전환 목표 (기간별)',
+          data: sliceW('buyConvTarget'),
+          borderColor: 'rgba(251,191,36,.4)',
+          borderWidth: 1.5, borderDash: [5, 4],
+          pointRadius: 0, fill: false, tension: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { ...TOOLTIP_OPTS, callbacks: { label: c => ` ${c.dataset.label}: ${c.raw}%` } } },
+      scales: {
+        x: { grid: { color: GRID } },
+        y: { grid: { color: GRID }, ticks: { callback: v => v + '%' } },
+      },
+    },
+  });
+  buildLegend('leg-funnel', window.funnelChart);
+
+  // 프로모션 기여도
+  const ctx2 = document.getElementById('c-promoContrib').getContext('2d');
+  const pc = sliceW('promoContrib');
+  const targetLine = Array(pc.length).fill(34.88);
+  new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: sliceW('labels'),
+      datasets: [
+        {
+          type: 'line',
+          label: '목표 34.88%',
+          data: targetLine,
+          borderColor: '#fb7185',
+          borderWidth: 1.5, borderDash: [4, 3],
+          pointRadius: 0, fill: false, tension: 0,
+        },
+        {
+          type: 'bar',
+          label: '프로모션 기여도 (%)',
+          data: pc,
+          backgroundColor: pc.map(v => v == null ? 'rgba(100,116,139,.2)' : v >= 34.88 ? 'rgba(52,211,153,.6)' : 'rgba(251,113,133,.4)'),
+          borderRadius: 3, borderSkipped: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { ...TOOLTIP_OPTS, callbacks: { label: c => ` ${c.dataset.label}: ${c.raw != null ? c.raw + '%' : '-'}` } } },
+      scales: {
+        x: { grid: { color: GRID }, ticks: { font: { size: 10 }, maxRotation: 30 } },
+        y: { grid: { color: GRID }, ticks: { callback: v => v + '%' } },
+      },
+    },
+  });
+
+  // KPI 달성 현황 — 월별 주간평균 기반 (26년_주간지표 실제 데이터)
+  const kpiBox = document.getElementById('kpiAchievements');
+  const items = [
+    // 11월 (11/3~11/24, 4주)
+    { label: '톱배너 CTR (11월)',    target: 2.04,  actual: 3.90 },
+    { label: '시청전환 (11월)',      target: 40.04, actual: 40.26 },
+    { label: '구매전환 (11월)',      target: 8.21,  actual: 8.62 },
+    // 12월 (12/1~12/29, 5주)
+    { label: '톱배너 CTR (12월)',    target: 2.04,  actual: 3.95 },
+    { label: '시청전환 (12월)',      target: 40.04, actual: 38.65 },
+    { label: '구매전환 (12월)',      target: 8.21,  actual: 7.76 },
+    // 1월 (1/5~1/26, 4주)
+    { label: '톱배너 CTR (1월)',     target: 2.54,  actual: 2.23 },
+    { label: '홈ATF 배너 (1월)',     target: 2.54,  actual: 4.46 },
+    { label: '시청전환 (1월)',       target: 40.99, actual: 37.86 },
+    { label: '구매전환 (1월)',       target: 8.86,  actual: 7.85 },
+    // 2월 (2/2~2/23, 4주) — 26년_주간지표 월간 확정치
+    { label: '톱배너 CTR (2월)',     target: 2.60,  actual: 2.10 },
+    { label: '홈ATF 배너 (2월)',     target: 2.60,  actual: 6.85 },
+    { label: '시청전환 (2월)',       target: 41.60, actual: 35.92 },
+    { label: '구매전환 (2월)',       target: 8.99,  actual: 6.48 },
+    // 3월 진행중 (3/2~3/16, 3주)
+    { label: '톱배너 CTR (3월~)',    target: 2.60,  actual: 2.39 },
+    { label: '시청전환 (3월~)',      target: 41.60, actual: 39.39 },
+    { label: '구매전환 (3월~)',      target: 8.99,  actual: 7.70 },
+  ];
+  items.forEach(({ label, target, actual }) => {
+    const pct = Math.min(140, (actual / target * 100));
+    const over = pct >= 100;
+    const diff = (actual - target).toFixed(2);
+    kpiBox.innerHTML += `
+      <div class="kpi-row">
+        <div class="kpi-row-label">${label}</div>
+        <div class="kpi-row-target">${target}%</div>
+        <div class="kpi-row-actual">${actual}%</div>
+        <div class="kpi-row-diff ${over?'pos':'neg'}">${over?'+':''}${diff}%p</div>
+      </div>`;
+  });
+}
+
+// ════════════════════════════════════════════════
+//   FILTER — 월별 기간 필터
+// ════════════════════════════════════════════════
+
+const MONTH_RANGES_W = {
+  all: [0, 23],
+  '25': [0, 12],  // 25년 전체 (10월~12월)
+  '26': [13, 23], // 26년 전체 (1월~3월)
+  '10': [0, 3],   // 10/6 ~ 10/27  (4주)
+  '11': [4, 7],   // 11/3 ~ 11/24  (4주)
+  '12': [8, 12],  // 12/1 ~ 12/29  (5주)
+  '1':  [13, 16], // 1/5  ~ 1/26   (4주)
+  '2':  [17, 20], // 2/2  ~ 2/23   (4주)
+  '3':  [21, 23], // 3/2  ~ 3/16   (3주)
+};
+const MONTH_RANGES_LB = {
+  all: [0, 19],
+  '25': [0, 9],   // 25년 전체 (10/27~12/29)
+  '26': [10, 19], // 26년 전체 (1/5~3/9)
+  '10': [0, 0],   // 10/27
+  '11': [1, 4],   // 11/3 ~ 11/24
+  '12': [5, 9],   // 12/1 ~ 12/29
+  '1':  [10, 13], // 1/5  ~ 1/26
+  '2':  [14, 17], // 2/2  ~ 2/23
+  '3':  [18, 19], // 3/2  ~ 3/9
+};
+const FILTER_INFO = {
+  all: '24주 전체 · 25.10 ~ 26.03',
+  '25': '13주 · 25.10.06 ~ 25.12.29',
+  '26': '11주 · 26.01.05 ~ 26.03.16',
+  '10': '4주 · 25.10.06 ~ 25.10.27',
+  '11': '4주 · 25.11.03 ~ 25.11.24',
+  '12': '5주 · 25.12.01 ~ 25.12.29',
+  '1': '4주 · 26.01.05 ~ 26.01.26',
+  '2': '4주 · 26.02.02 ~ 26.02.23',
+  '3': '3주 · 26.03.02 ~ 26.03.16',
+};
+
+let activeFilter = 'all';
+let activeLBSlot = 'all';
+let activeAreaMode = 'avg'; // 월별 배너 CTR 비교 집계 방식: avg | max | min
+
+function setAreaMode(mode) {
+  activeAreaMode = mode;
+  destroyAndRebuild('overview');
+}
+
+// 구좌별(or 전체) 라이브배너 데이터 반환 — 기간 필터 연동
+function getLBData(key) {
+  const [s, e] = MONTH_RANGES_LB[activeFilter] || [0, 19];
+  if (activeLBSlot === 'all') return LB[key].slice(s, e + 1);
+  const slot = LB.slots[activeLBSlot];
+  return slot ? slot[key].slice(s, e + 1) : LB[key].slice(s, e + 1);
+}
+
+// 구좌 선택 변경
+function setLBSlot(slot) {
+  activeLBSlot = slot;
+  const activeTabEl = document.querySelector('.tab-section.active');
+  if (activeTabEl && activeTabEl.id === 'tab-live') destroyAndRebuild('live');
+}
+
+function sliceW(key) {
+  const [s, e] = MONTH_RANGES_W[activeFilter] || [0, 23];
+  return W[key].slice(s, e + 1);
+}
+function sliceLB(key) {
+  const [s, e] = MONTH_RANGES_LB[activeFilter] || [0, 19];
+  return LB[key].slice(s, e + 1);
+}
+
+const CHART_IDS = {
+  overview: ['c-bannerTrend', 'c-liveRaw', 'c-areaCompare'],
+  banner:   ['c-topBannerDetail', 'c-wideBanner'],
+  live:     ['c-liveDual', 'c-liveMonth', 'c-liveCount'],
+  funnel:   ['c-funnelTrend', 'c-promoContrib'],
+};
+
+function destroyAndRebuild(tabName) {
+  (CHART_IDS[tabName] || []).forEach(id => Chart.getChart(id)?.destroy());
+  ['leg-bannerTrend', 'leg-funnel'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.innerHTML = '';
+  });
+  const hm = document.getElementById('bannerHeatmap'); if (hm) hm.innerHTML = '';
+  const kpi = document.getElementById('kpiAchievements'); if (kpi) kpi.innerHTML = '';
+  if (tabName === 'overview') buildOverview();
+  else if (tabName === 'banner')  buildBanner();
+  else if (tabName === 'live')    buildLive();
+  else if (tabName === 'funnel')  buildFunnel();
+}
+
+function setMonthFilter(month, btn) {
+  activeFilter = month;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('filter-info').textContent = FILTER_INFO[month] || '';
+  const activeTabEl = document.querySelector('.tab-section.active');
+  if (activeTabEl) {
+    const tab = activeTabEl.id.replace('tab-', '');
+    if (tab !== 'ai') destroyAndRebuild(tab);
+  }
+}
+
+// ════════════════════════════════════════════════
+//   TAB SWITCHING
+// ════════════════════════════════════════════════
+const tabBuilt = { overview: false, banner: false, live: false, funnel: false, ai: false, feed: false };
+
+document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (!tabBuilt[tab]) {
+      tabBuilt[tab] = true;
+      if (tab === 'banner')  buildBanner();
+      if (tab === 'live')    buildLive();
+      if (tab === 'funnel')  buildFunnel();
+      if (tab === 'ai')      initAI();
+      if (tab === 'feed')    buildFeed();
+    }
+  });
+});
+
+function filterBannerTrend(btn, mode) {
+  document.querySelectorAll('.chips .chip').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  if (!window.bannerTrendChart) return;
+  const chart = window.bannerTrendChart;
+  chart.data.datasets.forEach((ds, i) => {
+    if (mode === 'all') ds.hidden = false;
+    else if (mode === 'top')  ds.hidden = i !== 0;
+    else if (mode === 'live') ds.hidden = !(i === 1 || i === 2);
+  });
+  chart.update();
+}
+
+// ════════════════════════════════════════════════
+//   AI 분석 섹션
+// ════════════════════════════════════════════════
+
+function buildAIContext() {
+  const avgOf = arr => {
+    const v = arr.filter(x => x != null);
+    return v.length ? (v.reduce((a,b) => a+b, 0) / v.length).toFixed(2) : '-';
+  };
+
+  const weeklyTable = W.labels.map((lbl, i) =>
+    `  ${lbl}주: 톱배너 ${W.topBanner[i]}% | 라이브배너 ${W.liveBanner[i]}% | 홈ATF ${W.promoTab[i] ?? '-'}% | 시청전환 ${W.viewConv[i]}% | 구매전환 ${W.buyConv[i]}%`
+  ).join('\n');
+
+  const lbTable = LB.labels.map((lbl, i) =>
+    `  ${lbl}주: CTR ${LB.ctr[i]}% | 방송수 ${LB.count[i]}건`
+  ).join('\n');
+
+  return `당신은 그립(Grip) 라이브커머스 편성운영팀의 데이터 분석 전문가입니다.
+아래 실제 운영 데이터를 기반으로 정확하고 실용적인 분석을 제공하세요.
+
+== 대시보드 개요 ==
+- 분석 기간: 2025년 10월 ~ 2026년 3월 (24주)
+- 데이터 소스: 1-0.주간지표, 26년_주간지표, 라이브배너 RAW
+- KPI 목표: Oct-Dec 톱배너 2.04%/시청전환 40.04%/구매전환 8.21%, Jan 2.54%/40.99%/8.86%, Feb-Mar 2.60%/41.60%/8.99%
+
+== 주간 배너·퍼널 지표 (W 데이터) ==
+${weeklyTable}
+
+== 라이브배너 RAW 주간 집계 (방송별 평균 CTR) ==
+${lbTable}
+
+== 월별 라이브배너 RAW 평균 ==
+- 10월: 3.94% (1주, 10/27만)
+- 11월: 5.01% (11/3~11/24, 4주 평균)
+- 12월: 5.39% (12/1~12/29, 5주 평균)
+- 1월:  6.17% (1/5~1/26, 4주 평균) ← 1/26주 9.24%가 평균 끌어올림
+- 2월:  2.79% (2/2~2/23, 4주 평균) ← 큰 폭 하락
+- 3월:  2.31% (3/2~3/9, 2주 평균) / 3/16주 4.34% (완료)
+- 3/16주 특이사항: 홈ATF 배너 9.91%(와이드배너 슈퍼위크, 집계 CTR 31.46%), 톱배너 2.66%로 회복
+
+== 주요 맥락 정보 ==
+- 설날 2026: 2월 17일 → 2/16주(2/16~2/22) 방송 수 104건으로 급감 (평소 200~350건)
+- 1월 26일 주(1/26~2/1): 라이브배너 RAW CTR 9.24%, 방송수 246건 — 이례적 고성능
+- 12/15주(슈퍼위크): 톱배너 7.73% — 연말 이벤트 효과
+- 11/17주: 톱배너 5.19% — 11월 3주차 슈퍼위크 효과
+- 상단 와이드배너: 12/15~12/21(26%), 1/19~1/23(21%), 2/2~2/5(19%) 운영 → CTR 극적 상승
+- 2/9주 라이브배너: 1.92%, 224건 — 방송 수는 정상이나 CTR 급감 (원인 불명확, 설 준비 심리?)
+- 3월 이후 시청전환 회복세: 3/9주 40.17%, 3/16주 39.36% (2월 저점 33.58% 대비 +7%p 개선)
+
+== KPI 달성 현황 (월별) ==
+- 11월: 톱배너 3.90%(목표 2.04% ✓ 191%), 시청전환 40.26%(목표 40.04% ✓), 구매전환 8.62%(목표 8.21% ✓)
+- 12월: 톱배너 3.95%(✓), 시청전환 38.65%(목표 40.04% ✗), 구매전환 7.76%(목표 8.21% ✗)
+- 1월: 톱배너 2.23%(목표 2.54% ✗), 시청전환 37.86%(목표 40.99% ✗), 구매전환 7.85%(목표 8.86% ✗)
+- 2월: 톱배너 2.10%(목표 2.60% ✗), 홈ATF배너 6.85%(목표 2.60% ✓+), 시청전환 35.92%(목표 41.60% ✗), 구매전환 6.48%(목표 8.99% ✗)
+- 3월(3/16주 완료): 톱배너 2.66%(목표 2.60% ✓), 홈ATF 9.91%(와이드배너 슈퍼위크), 시청전환 39.77%(목표 41.60% ✗), 구매전환 7.92%(목표 8.99% ✗)`;
+}
+
+let aiChatHistory = [];
+
+function initAI() {
+  const saved = localStorage.getItem('grip_ai_provider_onsite');
+  const savedKey = localStorage.getItem('grip_ai_key_onsite');
+  if (saved) document.getElementById('ai-provider').value = saved;
+  if (savedKey) {
+    document.getElementById('ai-key').value = savedKey;
+    document.getElementById('ai-key-status').textContent = '✓ 키 저장됨';
+  }
+}
+
+function saveAIKey() {
+  const provider = document.getElementById('ai-provider').value;
+  const key = document.getElementById('ai-key').value.trim();
+  if (!key) return;
+  localStorage.setItem('grip_ai_provider_onsite', provider);
+  localStorage.setItem('grip_ai_key_onsite', key);
+  document.getElementById('ai-key-status').textContent = '✓ 저장 완료';
+}
+
+function askQuick(btn) {
+  const q = btn.textContent.replace(/^[^\s]+\s/, '');
+  document.getElementById('ai-input').value = q;
+  sendAI();
+}
+
+function appendMsg(role, text) {
+  const chat = document.getElementById('ai-chat');
+  const empty = document.getElementById('ai-empty');
+  if (empty) empty.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = `ai-msg ${role}`;
+  const label = role === 'user' ? '나' : 'AI';
+  wrap.innerHTML = `<div class="ai-msg-meta">${label}</div><div class="ai-bubble">${text}</div>`;
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+  return wrap.querySelector('.ai-bubble');
+}
+
+function appendLoading() {
+  const chat = document.getElementById('ai-chat');
+  const empty = document.getElementById('ai-empty');
+  if (empty) empty.remove();
+  const wrap = document.createElement('div');
+  wrap.className = 'ai-loading-wrap';
+  wrap.id = 'ai-loading';
+  wrap.innerHTML = `<div class="ai-loading-dots"><span></span><span></span><span></span></div>`;
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendAI() {
+  const input = document.getElementById('ai-input');
+  const question = input.value.trim();
+  if (!question) return;
+
+  const provider = document.getElementById('ai-provider').value;
+  const apiKey = localStorage.getItem('grip_ai_key_onsite') || document.getElementById('ai-key').value.trim();
+  if (!apiKey) {
+    appendMsg('ai', '⚠️ API 키를 먼저 입력하고 저장해주세요.');
+    return;
+  }
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('ai-send').disabled = true;
+  appendMsg('user', question);
+  appendLoading();
+
+  const systemPrompt = buildAIContext();
+  aiChatHistory.push({ role: 'user', content: question });
+
+  try {
+    let answer = '';
+    if (provider === 'groq') {
+      answer = await callGroq(apiKey, systemPrompt, aiChatHistory);
+    } else if (provider === 'gemini') {
+      answer = await callGemini(apiKey, systemPrompt, aiChatHistory);
+    } else if (provider === 'claude') {
+      answer = await callClaude(apiKey, systemPrompt, aiChatHistory);
+    }
+    document.getElementById('ai-loading')?.remove();
+    const bubble = appendMsg('ai', answer);
+    aiChatHistory.push({ role: 'assistant', content: answer });
+    if (aiChatHistory.length > 20) aiChatHistory = aiChatHistory.slice(-20);
+  } catch (e) {
+    document.getElementById('ai-loading')?.remove();
+    appendMsg('ai', `❌ 오류 발생: ${e.message}\n\nAPI 키 또는 네트워크를 확인해주세요.`);
+  }
+  document.getElementById('ai-send').disabled = false;
+}
+
+async function callGroq(key, system, history) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'system', content: system }, ...history],
+      temperature: 0.5, max_tokens: 1200,
+    }),
+  });
+  if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
+  const d = await res.json();
+  return d.choices[0].message.content;
+}
+
+async function callGemini(key, system, history) {
+  const contents = history.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: system }] },
+      contents,
+      generationConfig: { temperature: 0.5, maxOutputTokens: 1200 },
+    }),
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
+  const d = await res.json();
+  return d.candidates[0].content.parts[0].text;
+}
+
+async function callClaude(key, system, history) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': key, 'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1200,
+      system,
+      messages: history,
+    }),
+  });
+  if (!res.ok) throw new Error(`Claude ${res.status}: ${await res.text()}`);
+  const d = await res.json();
+  return d.content[0].text;
+}
+
+// ════════════════════════════════════════════════
+//   INSIGHT FEED
+// ════════════════════════════════════════════════
+
+function setFeedView(view, btn) {
+  document.querySelectorAll('.feed-view-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const wc = document.getElementById('weekly-container');
+  const fc = document.getElementById('feed-container');
+  if (wc) wc.style.display = view === 'weekly' ? '' : 'none';
+  if (fc) fc.style.display = view === 'daily'   ? '' : 'none';
+}
+
+function parseMrkdwn(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*\n]+?)\*/g, '<strong>$1</strong>')
+    .replace(/_([^_\n]+?)_/g, '<em>$1</em>')
+    .replace(/`([^`]+?)`/g, '<code style="background:var(--surface-3);padding:1px 5px;border-radius:4px;font-size:11.5px">$1</code>')
+    .replace(/&gt;(.+)/gm, '<blockquote style="border-left:3px solid var(--border-hi);padding-left:10px;color:var(--text-2);margin:4px 0">$1</blockquote>')
+    .replace(/•/g, '·')
+    .replace(/\n/g, '<br>');
+}
+
+function buildWeeklyReport() {
+  const container = document.getElementById('weekly-container');
+  if (!container) return;
+  if (!WEEKLY_INSIGHTS || WEEKLY_INSIGHTS.length === 0) {
+    container.innerHTML = '<div class="feed-empty">위클리 리포트 데이터가 없습니다.</div>';
+    return;
+  }
+
+  const DOT = { done: 'var(--g)', issue: 'var(--r)', test: 'var(--b)', info: 'var(--y)' };
+  const TAG  = { done: 'tag-done', issue: 'tag-issue', test: 'tag-test', info: 'tag-info' };
+
+  const html = WEEKLY_INSIGHTS.map(w => `
+    <div class="weekly-hero">
+      <div class="weekly-hero-label">위클리 인사이트 리포트</div>
+      <div class="weekly-hero-title">${w.week}</div>
+      <div class="weekly-hero-range">${w.range}</div>
+    </div>
+
+    <div class="weekly-stats-row">
+      ${w.stats.map(s => `
+        <div class="weekly-stat">
+          <div class="weekly-stat-label">${s.label}</div>
+          <div class="weekly-stat-value" style="color:${s.color}">${s.value}</div>
+          <div class="weekly-stat-sub">${s.sub}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="weekly-section">
+      <div class="weekly-section-head">
+        <span style="font-size:15px">📌</span>
+        <span class="weekly-section-title">주요 하이라이트</span>
+        <span class="weekly-section-count">${w.highlights.length}건</span>
+      </div>
+      ${w.highlights.map(h => `
+        <div class="highlight-item">
+          <div class="hi-dot" style="background:${DOT[h.type]||'var(--text-3)'}"></div>
+          <div class="hi-content">
+            <div class="hi-title">${h.title}</div>
+            <div class="hi-desc">${h.desc}</div>
+            <div class="hi-meta">
+              <span class="hi-date">${h.date}</span>
+              ${h.tags.map(t => `<span class="hi-tag ${TAG[h.type]||'tag-info'}">${t}</span>`).join('')}
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <div class="weekly-section">
+      <div class="weekly-section-head">
+        <span style="font-size:15px">📅</span>
+        <span class="weekly-section-title">일별 타임라인</span>
+      </div>
+      ${w.daily.map(d => `
+        <div class="timeline-day">
+          <div class="tl-date-col">
+            <span class="tl-date">${d.date}</span>
+            <span class="tl-day-name">${d.day}요일</span>
+          </div>
+          <div class="tl-body">
+            ${d.items.length
+              ? d.items.map(i => `<div class="tl-item">${i}</div>`).join('')
+              : '<div class="tl-empty">특이사항 없음</div>'}
+          </div>
+        </div>`).join('')}
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+}
+
+function buildFeed() {
+  buildWeeklyReport();
+
+  const container = document.getElementById('feed-container');
+  if (!container) return;
+
+  if (!SLACK_FEED || SLACK_FEED.length === 0) {
+    container.innerHTML = '<div class="feed-empty">아직 수집된 데일리 피드가 없습니다.<br>매일 18:00에 Slack #team-온사이트전략팀에서 자동으로 가져옵니다.</div>';
+    return;
+  }
+
+  const updatedEl = document.getElementById('feed-updated-at');
+  if (updatedEl && SLACK_FEED[0]?.fetchedAt) {
+    updatedEl.textContent = SLACK_FEED[0].fetchedAt;
+  }
+
+  const html = SLACK_FEED.map(item => {
+    const isWeekly = /위클리|주간|weekly/i.test(item.text);
+    const typeBadge = isWeekly
+      ? '<span class="feed-type-weekly">위클리</span>'
+      : '<span class="feed-type-daily">데일리</span>';
+    const bodyHtml = (item.sections || [item.text]).map(sec =>
+      `<div class="feed-section"><div class="feed-text">${parseMrkdwn(sec)}</div></div>`
+    ).join('');
+    return `
+    <div class="feed-card">
+      <div class="feed-card-head">
+        <span class="feed-date-badge">${item.date || ''}</span>
+        ${typeBadge}
+        <span class="feed-ts">${item.time || ''}</span>
+      </div>
+      <div class="feed-card-body">${bodyHtml}</div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = html;
+}
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', () => {
+  tabBuilt.overview = true;
+  buildOverview();
+});
+</script>
+</body>
+</html>
