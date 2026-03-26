@@ -1576,7 +1576,7 @@ function buildOverview() {
   if (subEl) subEl.innerHTML = `톱배너 · 라이브배너 · 특수배너(프로모션탭) ${modeLabel} &nbsp;|&nbsp; 필터 연동`;
 
   function _mAvg(key, mKey) {
-    const [s, e] = MONTH_RANGES_W[mKey] || [0, 23];
+    const [s, e] = MONTH_RANGES_W[mKey] || [0, 37];
     const vals = W[key].slice(s, e + 1).filter(v => v != null);
     if (!vals.length) return null;
     if (activeAreaMode === 'max') return +Math.max(...vals).toFixed(2);
