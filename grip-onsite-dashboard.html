@@ -1663,7 +1663,7 @@ function buildBanner() {
   // 주간 성과 테이블
   const tbl = document.getElementById('tbl-weekly');
   const wAll = { labels: sliceW('labels'), topBanner: wTB, liveBanner: sliceW('liveBanner'), promoTab: sliceW('promoTab'), topBannerTarget: wTgt };
-  tbl.innerHTML = `<thead><tr><th>주차</th><th>톱배너</th><th>목표</th><th>라이브배너</th><th>홈ATF배너</th><th>달성여부</th></tr></thead><tbody>` +
+  tbl.innerHTML = `<thead><tr><th>주차</th><th>톱배너</th><th>목표</th><th>라이브배너</th><th>특수배너</th><th>달성여부</th></tr></thead><tbody>` +
     wAll.labels.map((wk, i) => {
       const top = wAll.topBanner[i], live = wAll.liveBanner[i], promo = wAll.promoTab[i], tgt = wAll.topBannerTarget[i];
       const ach = top >= tgt;
