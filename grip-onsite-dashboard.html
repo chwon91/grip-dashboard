@@ -1556,10 +1556,14 @@ function buildOverview() {
 
   // 월별 배너 CTR 비교 (필터 연동 grouped bar)
   const ctx3 = document.getElementById('c-areaCompare').getContext('2d');
-  const _allM      = ['10','11','12','1','2','3'];
-  const _allMLabel = ['10월','11월','12월','1월','2월','3월'];
+  const _allM      = ['7','8','9','10','11','12','1','2','3'];
+  const _allMLabel = ['7월','8월','9월','10월','11월','12월','1월','2월','3월'];
   const _mFilter = {
-    all: _allM, '25': ['10','11','12'], '26': ['1','2','3'],
+    all: _allM,
+    '25': ['7','8','9','10','11','12'], '26': ['1','2','3'],
+    '7': ['7'], '8': ['8'], '9': ['9'],
+    '10': ['10'], '11': ['11'], '12': ['12'],
+    '1': ['1'], '2': ['2'], '3': ['3'],
   };
   const mKeys = _mFilter[activeFilter] || [activeFilter];
   const mLabels3 = mKeys.map(m => _allMLabel[_allM.indexOf(m)]);
