@@ -1573,7 +1573,7 @@ function buildOverview() {
   if (areaModeEl) areaModeEl.value = activeAreaMode;
   const modeLabel = { avg: '월 평균', median: '월 중간값', max: '월 최고', min: '월 최저' }[activeAreaMode];
   const subEl = document.getElementById('area-compare-sub');
-  if (subEl) subEl.innerHTML = `톱배너 · 라이브배너 · 홈ATF 배너 ${modeLabel} &nbsp;|&nbsp; 필터 연동`;
+  if (subEl) subEl.innerHTML = `톱배너 · 라이브배너 · 특수배너(프로모션탭) ${modeLabel} &nbsp;|&nbsp; 필터 연동`;
 
   function _mAvg(key, mKey) {
     const [s, e] = MONTH_RANGES_W[mKey] || [0, 23];
