@@ -1977,7 +1977,7 @@ function setAreaMode(mode) {
 
 // 구좌별(or 전체) 라이브배너 데이터 반환 — 기간 필터 연동
 function getLBData(key) {
-  const [s, e] = MONTH_RANGES_LB[activeFilter] || [0, 19];
+  const [s, e] = MONTH_RANGES_LB[activeFilter] ?? [0, 19];
   if (activeLBSlot === 'all') return LB[key].slice(s, e + 1);
   const slot = LB.slots[activeLBSlot];
   return slot ? slot[key].slice(s, e + 1) : LB[key].slice(s, e + 1);
