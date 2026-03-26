@@ -2052,7 +2052,7 @@ function buildAIContext() {
   };
 
   const weeklyTable = W.labels.map((lbl, i) =>
-    `  ${lbl}주: 톱배너 ${W.topBanner[i]}% | 라이브배너 ${W.liveBanner[i]}% | 홈ATF ${W.promoTab[i] ?? '-'}% | 시청전환 ${W.viewConv[i]}% | 구매전환 ${W.buyConv[i]}%`
+    `  ${lbl}주: 톱배너 ${W.topBanner[i]}% | 라이브배너 ${W.liveBanner[i]}% | 특수배너 ${W.promoTab[i] ?? '-'}% | 시청전환 ${W.viewConv[i]}% | 구매전환 ${W.buyConv[i]}%`
   ).join('\n');
 
   const lbTable = LB.labels.map((lbl, i) =>
