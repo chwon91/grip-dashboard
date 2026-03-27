@@ -1484,37 +1484,6 @@ function buildOverview() {
     trendSubEl.innerHTML = `톱배너(1번구좌) · 라이브배너(집계) · 특수배너(프로모션탭) &nbsp;|&nbsp; ${W.labels[ts]} ~ ${W.labels[te]}`;
   }
 
-  // 연도 경계선 플러그인 (25년↔26년, 1/5주 직전)
-  const yearBoundaryPlugin = {
-    id: 'yearBoundary',
-    afterDraw(chart) {
-      const [s, e] = MONTH_RANGES_W[activeFilter] || [0, 37];
-      const boundaryGlobalIdx = 27; // W.labels에서 '1/5' 인덱스
-      if (boundaryGlobalIdx <= s || boundaryGlobalIdx > e) return;
-      const slicedIdx = boundaryGlobalIdx - s;
-      const meta = chart.getDatasetMeta(0);
-      if (!meta.data || !meta.data[slicedIdx]) return;
-      const prevX = meta.data[slicedIdx - 1] ? meta.data[slicedIdx - 1].x : meta.data[slicedIdx].x;
-      const currX = meta.data[slicedIdx].x;
-      const x = (prevX + currX) / 2;
-      const ctx = chart.ctx;
-      const ca = chart.chartArea;
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255,255,255,0.20)';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([5, 4]);
-      ctx.beginPath();
-      ctx.moveTo(x, ca.top);
-      ctx.lineTo(x, ca.bottom);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.font = '10px Pretendard, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('25년│26년', x, ca.top + 12);
-      ctx.restore();
-    }
-  };
 
   // 배너 트렌드
   const ctx1 = document.getElementById('c-bannerTrend').getContext('2d');
