@@ -1859,6 +1859,7 @@ function buildFunnel() {
   const ctx = document.getElementById('c-funnelTrend').getContext('2d');
   window.funnelChart = new Chart(ctx, {
     type: 'line',
+    plugins: [yearBoundaryPlugin],
     data: {
       labels: sliceW('labels'),
       datasets: [
